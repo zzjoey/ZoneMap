@@ -9,6 +9,8 @@
  * --------------------------------------------------------------------------- */
 
 :root {
+  color-scheme: dark;
+
   /* Dark theme (default) */
   --bg-primary:    5 8 13;
   --bg-secondary:  9 12 21;
@@ -28,6 +30,8 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
+
   /* Crisp, minimal backgrounds */
   --bg-primary:    249 250 252;
   --bg-secondary:  241 244 249;

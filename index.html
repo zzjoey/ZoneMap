@@ -53,14 +53,16 @@
     }
     </script>
 
-    <!-- Theme -->
-    <meta name="theme-color" content="#040609" />
+    <!-- Theme color — controls Android Chrome toolbar + navigation bar tint -->
+    <meta id="theme-color-meta" name="theme-color" content="#040609" />
     <meta name="color-scheme" content="dark light" />
-    <!-- Anti-FOUC: restore saved theme before first paint -->
+    <!-- Anti-FOUC: restore saved theme and sync theme-color before first paint -->
     <script>
       (function () {
-        if (localStorage.getItem('theme') === 'light')
-          document.documentElement.dataset.theme = 'light'
+        var isLight = localStorage.getItem('theme') === 'light'
+        if (isLight) document.documentElement.dataset.theme = 'light'
+        var meta = document.getElementById('theme-color-meta')
+        if (meta) meta.setAttribute('content', isLight ? '#f9fafc' : '#040609')
       })()
     </script>
 

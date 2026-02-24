@@ -64,7 +64,7 @@ export default function App() {
     () => localStorage.getItem('theme') !== 'light'
   )
 
-  // Apply theme to <html> and persist to localStorage
+  // Apply theme to <html>, persist to localStorage, and sync Android nav bar color
   useEffect(() => {
     const root = document.documentElement
     if (isDark) {
@@ -73,6 +73,9 @@ export default function App() {
       root.dataset.theme = 'light'
     }
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    // Keep theme-color in sync so Android Chrome nav bar matches the app theme
+    const meta = document.getElementById('theme-color-meta')
+    if (meta) meta.setAttribute('content', isDark ? '#040609' : '#f9fafc')
   }, [isDark])
 
   const handleToggleTheme = useCallback(() => setIsDark((d) => !d), [])

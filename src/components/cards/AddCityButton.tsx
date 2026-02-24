@@ -16,17 +16,17 @@ export function AddCityButton({ onClick }: AddCityButtonProps) {
       whileTap={{ scale: 0.98 }}
       className="
         w-full flex items-center justify-center gap-2
-        py-5 rounded-xl border border-dashed border-border
+        min-h-[4.5rem] py-5 rounded-xl border border-dashed border-border
         text-text-muted hover:text-accent-green hover:border-accent-green/40
         text-sm font-light tracking-wide
         transition-colors duration-200 cursor-pointer
-        md:py-0 md:h-12 md:rounded-card md:gap-2 md:text-sm md:border-solid
+        md:min-h-0 md:py-0 md:h-12 md:rounded-card md:gap-2 md:text-sm md:border-solid
       "
       aria-label="Add city"
     >
       <svg
-        width="14"
-        height="14"
+        width="16"
+        height="16"
         viewBox="0 0 20 20"
         fill="none"
         stroke="currentColor"
