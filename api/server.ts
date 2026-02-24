@@ -51,6 +51,7 @@ app.route('/api/cities', citiesRouter)
 //    so they are never swallowed by the catch-all index.html handler.
 app.get('/sitemap.xml', serveStatic({ path: './dist/sitemap.xml' }))
 app.get('/robots.txt', serveStatic({ path: './dist/robots.txt' }))
+app.get('/llms.txt', serveStatic({ path: './dist/llms.txt' }))
 
 // 6. Serve remaining frontend static files (production build in dist/)
 app.use('*', serveStatic({ root: './dist' }))
