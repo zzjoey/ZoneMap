@@ -2,25 +2,27 @@ import { motion } from 'framer-motion'
 import { City } from '../../types'
 import { TimeInput } from './TimeInput'
 import { TimeSlider } from './TimeSlider'
-import { parseTimeInTimezone, minutesToTimeStr } from '../../utils/timeUtils'
+import { parseTimeInTimezone } from '../../utils/timeUtils'
 
 interface TimeControlProps {
   baseCity: City
   baseTime: Date
   isLive: boolean
   use12h: boolean
+  isDark: boolean
   onTimeChange: (date: Date) => void
   onResetLive: () => void
 }
 
 /**
- * Bottom control bar: city label + time input + slider + live toggle.
+ * Bottom control bar: city label + time input + offset timeline slider + live toggle.
  */
 export function TimeControl({
   baseCity,
   baseTime,
   isLive,
   use12h,
+  isDark,
   onTimeChange,
   onResetLive,
 }: TimeControlProps) {
@@ -29,17 +31,20 @@ export function TimeControl({
     onTimeChange(date)
   }
 
-  function handleSliderChange(minutes: number) {
-    const timeStr = minutesToTimeStr(minutes)
-    const date = parseTimeInTimezone(timeStr, baseCity.timezone)
-    onTimeChange(date)
+  function handleSliderChange(offsetMinutes: number) {
+    // Apply the full offset (including multi-day) directly to the real wall clock.
+    // This avoids the minutes-of-day modulo issue and gives correct dates.
+    const targetDate = new Date(Date.now() + offsetMinutes * 60 * 1000)
+    onTimeChange(targetDate)
   }
 
   return (
-    <div className="flex-shrink-0 flex items-center gap-4 px-5 bg-bg-secondary border-t border-border"
-         style={{ height: '4rem' }}>
-      {/* Base city label */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+    <div
+      className="flex-shrink-0 flex items-center gap-2 md:gap-4 px-3 md:px-5 bg-bg-secondary border-t border-border"
+      style={{ height: '4rem' }}
+    >
+      {/* Base city label — hidden on small screens to save space */}
+      <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
         <span className="w-2 h-2 rounded-full bg-accent-green flex-shrink-0" />
         <span className="text-sm font-medium text-text-secondary whitespace-nowrap">
           {baseCity.name}
@@ -54,10 +59,11 @@ export function TimeControl({
         onChange={handleInputChange}
       />
 
-      {/* Full-width slider */}
+      {/* Offset timeline slider */}
       <TimeSlider
         baseTime={baseTime}
         baseCity={baseCity}
+        isLive={isLive}
         onChange={handleSliderChange}
       />
 
@@ -71,11 +77,19 @@ export function TimeControl({
           border transition-colors duration-200
           ${isLive
             ? 'border-accent-green-border text-accent-green bg-accent-green-dim cursor-default'
-            : 'border-amber-500/60 text-amber-400 bg-amber-500/10 cursor-pointer'
+            : isDark
+            ? 'border-amber-500/60 text-amber-400 bg-amber-500/10 cursor-pointer'
+            : 'border-orange-500/55 text-orange-600 bg-orange-50 cursor-pointer'
           }
         `}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-accent-green animate-pulse-slow' : 'bg-amber-400 animate-pulse'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${
+          isLive
+            ? 'bg-accent-green animate-pulse-slow'
+            : isDark
+            ? 'bg-amber-400 animate-pulse'
+            : 'bg-orange-500 animate-pulse'
+        }`} />
         {isLive ? 'Live' : 'Resume'}
       </motion.button>
     </div>

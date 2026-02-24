@@ -2,6 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+ * Theme CSS custom properties
+ * Using space-separated RGB channels so Tailwind's opacity modifiers work:
+ *   bg-accent-green/25  →  rgb(var(--accent-green) / 0.25)
+ * --------------------------------------------------------------------------- */
+
+:root {
+  /* Dark theme (default) */
+  --bg-primary:    5 8 13;
+  --bg-secondary:  9 12 21;
+  --bg-card:       13 17 32;
+  --bg-card-active: 11 28 12;
+  --bg-card-day:   38 44 62;   /* cool gray-white — daytime feel */
+  --bg-card-night:  5  7 30;   /* deep cool blue — nighttime feel */
+  --accent-green:  74 222 128;
+  --text-primary:  230 238 255;
+  --text-secondary: 140 170 191;
+  --text-muted:    95 125 151;
+  --border-color:  24 32 48;
+
+  /* Map-specific (SVG/canvas colors referenced via inline style) */
+  --map-ocean:    4 6 9;
+  --map-vignette: 5 8 13;
+}
+
+[data-theme="light"] {
+  /* Crisp, minimal backgrounds */
+  --bg-primary:    249 250 252;
+  --bg-secondary:  241 244 249;
+  --bg-card:       255 255 255;
+  --bg-card-active: 236 253 245;
+  --bg-card-day:   255 255 255;  /* white — daytime feel */
+  --bg-card-night: 200 210 235;  /* cool lavender-blue — nighttime feel */
+
+  /* Green-600 – works for buttons and readable text */
+  --accent-green:  22 163 74;
+
+  /* High-contrast text hierarchy */
+  --text-primary:  17 24 39;
+  --text-secondary: 55 65 81;
+  --text-muted:    107 114 128;
+
+  /* Hairline borders */
+  --border-color:  226 232 240;
+
+  /* Map – soft azure water, pale blue-gray land */
+  --map-ocean:    172 214 234;
+  --map-vignette: 249 250 252;
+}
+
 @layer base {
   html,
   body {
@@ -40,8 +90,8 @@
 
   .card-glow {
     box-shadow:
-      0 0 20px rgba(74, 222, 128, 0.2),
-      0 0 60px rgba(74, 222, 128, 0.07);
+      0 0 20px rgb(var(--accent-green) / 0.2),
+      0 0 60px rgb(var(--accent-green) / 0.07);
   }
 
   .tabular-nums {
@@ -53,8 +103,8 @@
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
-    cursor: ew-resize; /* left-right resize cursor signals draggability */
-    height: 2px;        /* layout height = track height; wrapper div handles vertical centering */
+    cursor: ew-resize;
+    height: 22px;
   }
 
   input[type='range']::-webkit-slider-track {
@@ -68,12 +118,11 @@
     width: 40px;
     margin-top: -10px;
     border-radius: 6px;
-    background-color: #0d1120;
-    border: 1px solid rgba(74, 222, 128, 0.35);
+    background-color: rgb(var(--bg-card));
+    border: 1px solid rgb(var(--accent-green) / 0.35);
     box-shadow:
-      0 0 0 1px rgba(74, 222, 128, 0.1),
-      0 2px 8px rgba(0, 0, 0, 0.6);
-    /* Left/right chevron arrows as inline SVG */
+      0 0 0 1px rgb(var(--accent-green) / 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.4);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(74,222,128,0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(74,222,128,0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: center;
@@ -82,24 +131,32 @@
   }
 
   input[type='range']::-webkit-slider-thumb:hover {
-    border-color: rgba(74, 222, 128, 0.7);
+    border-color: rgb(var(--accent-green) / 0.7);
     box-shadow:
-      0 0 0 1px rgba(74, 222, 128, 0.2),
-      0 0 12px rgba(74, 222, 128, 0.25),
-      0 2px 8px rgba(0, 0, 0, 0.4);
+      0 0 0 1px rgb(var(--accent-green) / 0.2),
+      0 0 12px rgb(var(--accent-green) / 0.25),
+      0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   input[type='range']:active::-webkit-slider-thumb {
-    border-color: rgba(74, 222, 128, 0.9);
-    background-color: #0b1c0c;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='%234ade80' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='%234ade80' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 40px 22px;
+    border-color: rgb(var(--accent-green) / 0.9);
+    background-color: rgb(var(--bg-card-active));
     box-shadow:
-      0 0 0 1px rgba(74, 222, 128, 0.3),
-      0 0 16px rgba(74, 222, 128, 0.35),
-      0 2px 8px rgba(0, 0, 0, 0.4);
+      0 0 0 1px rgb(var(--accent-green) / 0.3),
+      0 0 16px rgb(var(--accent-green) / 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Light theme: replace dark SVG arrows with light-mode green */
+  [data-theme="light"] input[type='range']::-webkit-slider-thumb {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(22%2C163%2C74%2C0.7)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(22%2C163%2C74%2C0.7)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    box-shadow:
+      0 0 0 1px rgb(var(--accent-green) / 0.1),
+      0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  [data-theme="light"] input[type='range']:active::-webkit-slider-thumb {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(22%2C163%2C74%2C1)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(22%2C163%2C74%2C1)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
   input[type='range']::-moz-range-track {
@@ -111,9 +168,9 @@
     height: 22px;
     width: 40px;
     border-radius: 6px;
-    background-color: #0d1120;
-    border: 1px solid rgba(74, 222, 128, 0.35);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    background-color: rgb(var(--bg-card));
+    border: 1px solid rgb(var(--accent-green) / 0.35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(74%2C222%2C128%2C0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(74%2C222%2C128%2C0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: center;

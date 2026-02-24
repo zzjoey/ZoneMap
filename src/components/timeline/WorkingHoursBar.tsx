@@ -34,7 +34,7 @@ export function WorkingHoursBar({ cities, baseTime, workStart = 9, workEnd = 18 
       {/* Header toggle */}
       <button
         onClick={() => setIsExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/3 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2 hover:bg-text-primary/5 transition-colors"
       >
         <span className="text-[10px] font-light tracking-widest uppercase text-text-muted">
           Working Hours Overlap
@@ -130,20 +130,20 @@ function CityTimelineRow({ city, baseTime, workStart, workEnd }: CityTimelineRow
         {/* Work-hours highlight */}
         <div
           className={`absolute h-full rounded-full transition-colors duration-300 ${
-            isWorking ? 'bg-accent-green-dim' : 'bg-white/5'
+            isWorking ? 'bg-accent-green-dim' : 'bg-text-primary/5'
           }`}
           style={{ left: `${workStartPct}%`, width: `${workWidthPct}%` }}
         />
 
         {/* Work-start edge line */}
         <div
-          className="absolute top-0 bottom-0 w-px bg-white/10"
+          className="absolute top-0 bottom-0 w-px bg-text-primary/10"
           style={{ left: `${workStartPct}%` }}
         />
 
         {/* Work-end edge line */}
         <div
-          className="absolute top-0 bottom-0 w-px bg-white/10"
+          className="absolute top-0 bottom-0 w-px bg-text-primary/10"
           style={{ left: `${workStartPct + workWidthPct}%` }}
         />
 

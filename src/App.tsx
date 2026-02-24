@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useDeferredValue } from 'react'
 import { AnimatePresence } from 'framer-motion'
 
 import { City } from './types'
@@ -60,12 +60,33 @@ export default function App() {
   const [manualTime, setManualTime] = useState<Date | null>(INITIAL.manualDate)
   const [searchOpen, setSearchOpen] = useState(false)
   const [use12h, setUse12h] = useState(false)
+  const [isDark, setIsDark] = useState(
+    () => localStorage.getItem('theme') !== 'light'
+  )
+
+  // Apply theme to <html> and persist to localStorage
+  useEffect(() => {
+    const root = document.documentElement
+    if (isDark) {
+      delete root.dataset.theme
+    } else {
+      root.dataset.theme = 'light'
+    }
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+  }, [isDark])
+
+  const handleToggleTheme = useCallback(() => setIsDark((d) => !d), [])
 
   // Live clock — only ticks when isLiveMode is true
   const liveClock = useClock(isLiveMode)
 
   // Effective base time: live clock or manually-set date
   const baseTime = isLiveMode ? liveClock : (manualTime ?? liveClock)
+
+  // Deferred time for expensive renders (WorldMap / TerminatorCanvas).
+  // During fast drags, React will skip intermediate deferred renders and
+  // only commit the latest value — freeing the main thread for CityCard updates.
+  const deferredBaseTime = useDeferredValue(baseTime)
 
   // Sync state → URL (debounced)
   useUrlSync({ cities, baseCity, baseTime, isLiveMode })
@@ -76,6 +97,7 @@ export default function App() {
   const handleAddCity = useCallback((city: City) => {
     setCities((prev) => {
       if (prev.find((c) => c.id === city.id)) return prev
+      if (prev.length >= 6) return prev
       return [...prev, city]
     })
   }, [])
@@ -96,6 +118,10 @@ export default function App() {
 
   const handleSelectBase = useCallback((city: City) => {
     setBaseCity(city)
+  }, [])
+
+  const handleReorder = useCallback((newOrder: City[]) => {
+    setCities(newOrder)
   }, [])
 
   // ---------------------------------------------------------------------------
@@ -119,8 +145,28 @@ export default function App() {
 
   return (
     <AppShell>
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* ── Left: vertical city card list ─────────────────── */}
+      {/*
+       * Layout:
+       *   Mobile  (< md): flex-col — map fixed 52 vh (top), cards section (bottom)
+       *   Desktop (≥ md): flex-row — cards left sidebar, map fills remaining space
+       */}
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+        {/* World map — fixed 46 vh on mobile (top), fills remaining space on desktop (right) */}
+        <div className="order-first md:order-2 h-[46vh] flex-shrink-0 md:flex-1 md:h-auto flex flex-col min-h-0 min-w-0">
+          <WorldMap
+            cities={cities}
+            baseCity={baseCity}
+            baseTime={deferredBaseTime}
+            use12h={use12h}
+            isDark={isDark}
+            onCityClick={handleSelectBase}
+            onSetFormat={(v) => setUse12h(v)}
+            onToggleTheme={handleToggleTheme}
+            onTimeChange={handleTimeChange}
+          />
+        </div>
+
+        {/* City card list — below map on mobile (order-2), left sidebar on desktop (order-1) */}
         <CityCardRow
           cities={cities}
           baseCity={baseCity}
@@ -129,31 +175,22 @@ export default function App() {
           onSelectBase={handleSelectBase}
           onRemove={handleRemoveCity}
           onAddCity={() => setSearchOpen(true)}
+          onReorder={handleReorder}
         />
-
-        {/* ── Right: map + time control ──────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <WorldMap
-            cities={cities}
-            baseCity={baseCity}
-            baseTime={baseTime}
-            use12h={use12h}
-            onCityClick={handleSelectBase}
-            onSetFormat={(v) => setUse12h(v)}
-          />
-
-          <TimeControl
-            baseCity={baseCity}
-            baseTime={baseTime}
-            isLive={isLiveMode}
-            use12h={use12h}
-            onTimeChange={handleTimeChange}
-            onResetLive={handleResetLive}
-          />
-        </div>
       </div>
 
-      {/* ── City search overlay ─────────────────────────────── */}
+      {/* Time control — always full-width at bottom */}
+      <TimeControl
+        baseCity={baseCity}
+        baseTime={baseTime}
+        isLive={isLiveMode}
+        use12h={use12h}
+        isDark={isDark}
+        onTimeChange={handleTimeChange}
+        onResetLive={handleResetLive}
+      />
+
+      {/* City search overlay */}
       <AnimatePresence>
         {searchOpen && (
           <CitySearch

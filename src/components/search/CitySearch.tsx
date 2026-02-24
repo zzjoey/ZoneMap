@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { City } from '../../types'
 import { ALL_CITIES } from '../../data/cities'
@@ -10,36 +10,74 @@ interface CitySearchProps {
 }
 
 /**
- * Full-screen overlay city search with keyboard navigation.
- * Filters ALL_CITIES by name or country.
+ * Full-screen overlay city search.
+ * - Empty query: shows default cities from local data
+ * - Typed query: debounces 250ms, fetches /api/cities/search, falls back to local data
  */
 export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps) {
   const [query, setQuery] = useState('')
   const [highlighted, setHighlighted] = useState(0)
+  const [apiResults, setApiResults] = useState<City[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Focus the input on mount
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  // Focus on mount
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   // Close on Escape
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  const results = query.trim()
-    ? ALL_CITIES.filter(
-        (c) =>
-          c.name.toLowerCase().includes(query.toLowerCase()) ||
-          c.country.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 12)
-    : ALL_CITIES.filter((c) => !existingCityIds.has(c.id)).slice(0, 12)
+  // Debounced API search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setApiResults([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const apiKey = import.meta.env.VITE_API_KEY as string | undefined
+        const res = await fetch(`/api/cities/search?q=${encodeURIComponent(trimmed)}&limit=15`, {
+          headers: apiKey ? { 'X-API-Key': apiKey } : undefined,
+        })
+        if (res.ok) {
+          const data: City[] = await res.json()
+          setApiResults(data)
+        }
+      } catch {
+        // API unavailable — fall through to local results
+        setApiResults([])
+      } finally {
+        setIsLoading(false)
+      }
+    }, 250)
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [query])
+
+  const results = useMemo(() => {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      return ALL_CITIES.filter((c) => !existingCityIds.has(c.id)).slice(0, 15)
+    }
+    // Use API results when available, otherwise fall back to local
+    if (apiResults.length > 0) return apiResults
+    const q = trimmed.toLowerCase()
+    return ALL_CITIES.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q)
+    ).slice(0, 15)
+  }, [query, apiResults, existingCityIds])
 
   const handleSelect = useCallback(
     (city: City) => {
@@ -87,19 +125,24 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
       >
         {/* Search input */}
         <div className="flex items-center gap-4 px-6 py-5 border-b border-border">
-          <svg
-            className="text-text-muted flex-shrink-0"
-            width="20"
-            height="20"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <circle cx="6.5" cy="6.5" r="5" />
-            <line x1="10.5" y1="10.5" x2="14" y2="14" />
-          </svg>
+          {isLoading ? (
+            <svg
+              className="text-text-muted flex-shrink-0 animate-spin"
+              width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            >
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+          ) : (
+            <svg
+              className="text-text-muted flex-shrink-0"
+              width="20" height="20" viewBox="0 0 16 16"
+              fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+            >
+              <circle cx="6.5" cy="6.5" r="5" />
+              <line x1="10.5" y1="10.5" x2="14" y2="14" />
+            </svg>
+          )}
           <input
             ref={inputRef}
             type="text"
@@ -134,8 +177,8 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
                   className={`
                     flex items-center justify-between px-6 py-3.5
                     transition-colors duration-100
-                    ${highlighted === i ? 'bg-white/5' : ''}
-                    ${alreadyAdded ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer hover:bg-white/5'}
+                    ${highlighted === i ? 'bg-text-primary/5' : ''}
+                    ${alreadyAdded ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer hover:bg-text-primary/5'}
                   `}
                   onMouseEnter={() => setHighlighted(i)}
                 >

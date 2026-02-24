@@ -1,4 +1,5 @@
-import { AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { Reorder } from 'framer-motion'
 import { City } from '../../types'
 import { CityCard } from './CityCard'
 import { AddCityButton } from './AddCityButton'
@@ -11,11 +12,18 @@ interface CityCardRowProps {
   onSelectBase: (city: City) => void
   onRemove: (cityId: string) => void
   onAddCity: () => void
+  onReorder: (cities: City[]) => void
 }
 
+const MIN_WIDTH = 384
+const MAX_WIDTH = 560
+const DEFAULT_WIDTH = 384
+const MAX_CITIES = 6
+
 /**
- * Horizontally scrollable row of city time cards.
- * Handles animated add/remove via AnimatePresence.
+ * City card panel.
+ * Mobile:  absolute overlay at the bottom of the map (frosted glass, vertical cards).
+ * Desktop: resizable left sidebar with drag-to-reorder.
  */
 export function CityCardRow({
   cities,
@@ -25,25 +33,95 @@ export function CityCardRow({
   onSelectBase,
   onRemove,
   onAddCity,
+  onReorder,
 }: CityCardRowProps) {
-  return (
-    <div className="flex-shrink-0 w-96 flex flex-col gap-3 px-3 py-3 overflow-y-auto scrollbar-hide border-r border-border bg-bg-primary">
-      <AnimatePresence initial={false}>
-        {cities.map((city) => (
-          <CityCard
-            key={city.id}
-            city={city}
-            baseCity={baseCity}
-            baseTime={baseTime}
-            use12h={use12h}
-            isActive={city.id === baseCity.id}
-            onSelect={onSelectBase}
-            onRemove={onRemove}
-          />
-        ))}
-      </AnimatePresence>
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH)
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= 768
+  )
+  const resizeStartX = useRef(0)
+  const resizeStartW = useRef(0)
 
-      <AddCityButton onClick={onAddCity} />
+  useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  function handleResizeMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    resizeStartX.current = e.clientX
+    resizeStartW.current = panelWidth
+
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - resizeStartX.current
+      setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeStartW.current + delta)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  const atMax = cities.length >= MAX_CITIES
+
+  return (
+    <div
+      className="
+        relative flex-1 min-h-0 overflow-hidden
+        bg-bg-primary border-t border-border
+        md:flex-none md:flex-shrink-0 md:border-t-0 md:border-r
+      "
+      style={isDesktop ? { width: panelWidth } : undefined}
+    >
+      {/* Card list */}
+      <div className="
+        flex flex-col gap-2 px-3 pt-2.5 pb-3 h-full overflow-y-auto
+        md:gap-3 md:px-3 md:py-3 md:max-h-none md:overflow-x-hidden
+      ">
+        <Reorder.Group
+          as="div"
+          axis="y"
+          values={cities}
+          onReorder={onReorder}
+          className="flex flex-col gap-2 md:gap-3"
+          style={{ listStyle: 'none', padding: 0, margin: 0 }}
+        >
+          {cities.map((city) => (
+            <Reorder.Item
+              key={city.id}
+              value={city}
+              dragListener={isDesktop}
+              className="flex-shrink-0"
+              style={{ cursor: isDesktop ? 'grab' : undefined }}
+              whileDrag={{ scale: 1.02, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+            >
+              <CityCard
+                city={city}
+                baseCity={baseCity}
+                baseTime={baseTime}
+                use12h={use12h}
+                isActive={city.id === baseCity.id}
+                onSelect={onSelectBase}
+                onRemove={onRemove}
+              />
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+
+        {!atMax && <AddCityButton onClick={onAddCity} />}
+      </div>
+
+      {/* Resize handle — desktop only */}
+      <div
+        className="
+          hidden md:block absolute right-0 top-0 bottom-0 w-1
+          cursor-col-resize hover:bg-accent-green/25 transition-colors duration-150
+        "
+        onMouseDown={handleResizeMouseDown}
+      />
     </div>
   )
 }

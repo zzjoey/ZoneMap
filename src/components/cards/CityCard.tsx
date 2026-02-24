@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { City } from '../../types'
 import { formatCityTimeParts, formatCityDate, getRelativeOffset } from '../../utils/timeUtils'
-import { useState } from 'react'
+import { isCityDaytime } from '../../utils/terminator'
+import { useState, memo } from 'react'
 
 interface CityCardProps {
   city: City
@@ -14,15 +15,18 @@ interface CityCardProps {
 }
 
 /**
- * Individual city time card. Shows the city's local time, name, country,
- * relative offset vs base city, and date. Active (base) card is green-highlighted.
+ * Individual city time card.
+ *
+ * Desktop: wide card with full info (name, country, date, large time).
+ * Mobile:  compact fixed-width card (name + time, no country/date).
  */
-export function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect, onRemove }: CityCardProps) {
+export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect, onRemove }: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   const { hours, minutes, period } = formatCityTimeParts(baseTime, city.timezone, use12h)
   const localDate = formatCityDate(baseTime, city.timezone)
   const offset = getRelativeOffset(city.timezone, baseCity.timezone, baseTime)
+  const isDay = isCityDaytime(baseTime, city.lat, city.lng)
 
   function handleRemove(e: React.MouseEvent) {
     e.stopPropagation()
@@ -43,15 +47,17 @@ export function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect,
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        relative w-full rounded-card px-5 py-5 cursor-pointer
-        border transition-colors duration-300
+        relative w-full
+        rounded-card px-3 md:px-5 py-3 md:py-5
+        cursor-pointer border transition-colors duration-300
+        ${isDay ? 'bg-bg-card-day' : 'bg-bg-card-night'}
         ${isActive
-          ? 'bg-bg-card-active border-accent-green-border card-glow'
-          : 'bg-bg-card border-border hover:border-[#263450]'
+          ? 'border-2 border-accent-green-border card-glow'
+          : 'border border-border hover:border-text-muted/50'
         }
       `}
     >
-      {/* Remove button — appears on hover */}
+      {/* Desktop: hover-based remove button */}
       <AnimatePresence>
         {isHovered && !isActive && (
           <motion.button
@@ -60,8 +66,8 @@ export function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect,
             exit={{ opacity: 0, scale: 0.7 }}
             transition={{ duration: 0.12 }}
             onClick={handleRemove}
-            className="absolute top-2.5 right-2.5 w-6 h-6 flex items-center justify-center
-                       rounded-full text-text-muted hover:text-text-primary hover:bg-white/10
+            className="hidden md:flex absolute top-2.5 right-2.5 w-6 h-6 items-center justify-center
+                       rounded-full text-text-muted hover:text-text-primary hover:bg-text-primary/10
                        text-base leading-none transition-colors z-10"
           >
             ×
@@ -69,70 +75,63 @@ export function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect,
         )}
       </AnimatePresence>
 
+      {/* Mobile: always-visible remove button */}
+      {!isActive && (
+        <button
+          onClick={handleRemove}
+          className="md:hidden absolute top-2 right-2 w-5 h-5 flex items-center justify-center
+                     rounded-full text-text-muted text-xs bg-bg-primary/80 border border-border/60 z-10"
+        >
+          ×
+        </button>
+      )}
+
       {/* Offset badge */}
-      <div className="mb-4">
+      <div className="mb-1.5 md:mb-4">
         {isActive ? (
-          <span className="text-sm font-semibold text-accent-green uppercase tracking-widest flex items-center gap-1.5">
+          <span className="text-[10px] md:text-sm font-semibold text-accent-green uppercase tracking-widest flex items-center gap-1">
             <motion.span
-              className="w-2 h-2 rounded-full bg-accent-green inline-block"
+              className="w-1.5 h-1.5 rounded-full bg-accent-green inline-block"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
             />
             Base
           </span>
         ) : (
-          <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full text-accent-green bg-accent-green-dim border border-accent-green/20">
+          <span className="text-[10px] md:text-sm font-semibold px-2 py-0.5 rounded-full text-accent-green bg-accent-green-dim border border-accent-green/20">
             {offset}
           </span>
         )}
       </div>
 
-      {/* Main row: city info (left) + time (right) */}
-      <div className="flex items-end justify-between gap-3">
-        {/* Left: city name + country + date */}
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-semibold text-text-primary tracking-wide uppercase truncate">
+      {/* Main content: city info + time */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between md:gap-3">
+        {/* City name (+ country + date on desktop) */}
+        <div className="min-w-0 mb-1 md:mb-0 md:flex-1">
+          <div className="text-[13px] md:text-[15px] font-semibold text-text-primary tracking-wide uppercase truncate">
             {city.name}
           </div>
-          <div className="text-[13px] text-text-secondary truncate mt-1">
+          <div className="text-[11px] md:text-[13px] text-text-secondary truncate mt-0.5">
             {city.country}
           </div>
-          <div className="text-[13px] text-text-muted truncate mt-0.5">
+          <div className="hidden md:block text-[13px] text-text-muted truncate mt-0.5">
             {localDate}
           </div>
         </div>
 
-        {/* Right: large time */}
-        <div className="flex-shrink-0 flex items-baseline gap-1">
+        {/* Time — no animation on digits, updates instantly during timeline drag */}
+        <div className="flex-shrink-0 flex items-baseline gap-0.5 md:gap-1">
           <div className="flex items-baseline">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={`h-${city.id}-${hours}`}
-                className="text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight"
-                initial={{ y: 6, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -6, opacity: 0 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-              >
-                {hours}
-              </motion.span>
-            </AnimatePresence>
-            <span className="text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={`m-${city.id}-${minutes}`}
-                className="text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight"
-                initial={{ y: 6, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -6, opacity: 0 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-              >
-                {minutes}
-              </motion.span>
-            </AnimatePresence>
+            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+              {hours}
+            </span>
+            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
+            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+              {minutes}
+            </span>
           </div>
           {period && (
-            <span className="text-sm font-light text-text-muted self-end mb-1.5 tracking-wide">
+            <span className="text-[10px] md:text-sm font-light text-text-muted self-end mb-0.5 md:mb-1.5 tracking-wide">
               {period}
             </span>
           )}
@@ -140,4 +139,4 @@ export function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect,
       </div>
     </motion.div>
   )
-}
+})

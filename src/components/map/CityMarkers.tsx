@@ -8,6 +8,9 @@ interface CityMarkersProps {
   activeCity: City
   project: ProjectFn
   use12h: boolean
+  mapWidth: number
+  mapHeight: number
+  isDark: boolean
   onCityClick: (city: City) => void
 }
 
@@ -46,8 +49,13 @@ interface PlacedInfo {
  * Active city gets first pick; remaining cities are sorted left-to-right.
  * For each city we try 8 candidate positions and pick the one with the fewest
  * overlaps against already-placed labels and other cities' dot glow rings.
+ * Out-of-bounds candidates incur a heavy penalty so labels stay within the SVG.
  */
-function computeLabelOffsets(cities: PlacedInfo[]): Map<string, [number, number]> {
+function computeLabelOffsets(
+  cities: PlacedInfo[],
+  mapWidth: number,
+  mapHeight: number,
+): Map<string, [number, number]> {
   const result = new Map<string, [number, number]>()
   const occupiedBoxes: Box[] = []
 
@@ -92,9 +100,19 @@ function computeLabelOffsets(cities: PlacedInfo[]): Map<string, [number, number]
 
     for (const [ox, oy] of candidates) {
       const box = labelBox(x, y, ox, oy, labelW)
-      const score = [...occupiedBoxes, ...otherDots].filter((b) =>
+
+      // Heavy penalty for any label that would be clipped by the SVG viewport
+      const outOfBounds =
+        mapWidth > 0 &&
+        (box.x < 2 || box.x + box.w > mapWidth - 2 ||
+          box.y < 2 || box.y + box.h > mapHeight - 2)
+      const boundsScore = outOfBounds ? 1000 : 0
+
+      const overlapScore = [...occupiedBoxes, ...otherDots].filter((b) =>
         boxesOverlap(box, b)
       ).length
+
+      const score = boundsScore + overlapScore
 
       if (score < minScore) {
         minScore = score
@@ -115,7 +133,10 @@ function computeLabelOffsets(cities: PlacedInfo[]): Map<string, [number, number]
 // Components
 // ---------------------------------------------------------------------------
 
-export function CityMarkers({ cities, baseTime, activeCity, project, use12h, onCityClick }: CityMarkersProps) {
+export function CityMarkers({ cities, baseTime, activeCity, project, use12h, mapWidth, mapHeight, isDark, onCityClick }: CityMarkersProps) {
+  // Hide name labels on narrow (mobile) maps
+  const showLabels = mapWidth >= 640
+
   // 12h labels are wider ("2:30 AM" vs "14:30")
   const labelW = (isActive: boolean) => use12h
     ? (isActive ? 132 : 122)
@@ -130,8 +151,8 @@ export function CityMarkers({ cities, baseTime, activeCity, project, use12h, onC
     return [{ id: city.id, x, y, isActive, labelW: labelW(isActive), city }]
   })
 
-  // Compute collision-free label offsets
-  const labelOffsets = computeLabelOffsets(positioned)
+  // Compute collision-free label offsets (bounds-aware)
+  const labelOffsets = computeLabelOffsets(positioned, mapWidth, mapHeight)
 
   return (
     <g>
@@ -150,6 +171,8 @@ export function CityMarkers({ cities, baseTime, activeCity, project, use12h, onC
               labelOx={ox}
               labelOy={oy}
               labelW={lw}
+              showLabel={showLabels || isActive}
+              isDark={isDark}
               onClick={() => onCityClick(city)}
             />
           )
@@ -168,13 +191,25 @@ interface CityMarkerProps {
   labelOx: number
   labelOy: number
   labelW: number
+  showLabel: boolean
+  isDark: boolean
   onClick: () => void
 }
 
-function CityMarker({ city, x, y, localTime, isActive, labelOx, labelOy, labelW, onClick }: CityMarkerProps) {
+function CityMarker({ city, x, y, localTime, isActive, labelOx, labelOy, labelW, showLabel, isDark, onClick }: CityMarkerProps) {
   const dotRadius = isActive ? 6 : 4.5
-  const dotColor = isActive ? '#4ade80' : '#60a5fa'
-  const ringColor = isActive ? 'rgba(74,222,128,0.25)' : 'rgba(96,165,250,0.2)'
+
+  // Theme-aware colours
+  const dotColor    = isActive
+    ? (isDark ? '#4ade80' : '#16a34a')
+    : (isDark ? '#60a5fa' : '#2563eb')
+  const ringColor   = isActive
+    ? (isDark ? 'rgba(74,222,128,0.25)'  : 'rgba(22,163,74,0.2)')
+    : (isDark ? 'rgba(96,165,250,0.2)'   : 'rgba(37,99,235,0.15)')
+  const strokeColor = isActive
+    ? (isDark ? 'rgba(74,222,128,0.8)'  : 'rgba(22,163,74,0.8)')
+    : (isDark ? 'rgba(96,165,250,0.5)'  : 'rgba(37,99,235,0.5)')
+  const pulseColor  = isDark ? '#4ade80' : '#16a34a'
 
   return (
     <motion.g
@@ -195,7 +230,7 @@ function CityMarker({ city, x, y, localTime, isActive, labelOx, labelOy, labelW,
         cy={y}
         r={dotRadius}
         fill={dotColor}
-        stroke={isActive ? 'rgba(74,222,128,0.8)' : 'rgba(96,165,250,0.5)'}
+        stroke={strokeColor}
         strokeWidth={1.5}
       />
 
@@ -206,12 +241,12 @@ function CityMarker({ city, x, y, localTime, isActive, labelOx, labelOy, labelW,
           animate={{ scale: [1, 3.5], opacity: [0.7, 0] }}
           transition={{ repeat: Infinity, duration: 2, ease: 'easeOut' }}
         >
-          <circle cx={x} cy={y} r={dotRadius} fill="none" stroke="#4ade80" strokeWidth={1.5} />
+          <circle cx={x} cy={y} r={dotRadius} fill="none" stroke={pulseColor} strokeWidth={1.5} />
         </motion.g>
       )}
 
-      {/* Label */}
-      <TimeLabel
+      {/* Label — hidden on mobile (narrow map) */}
+      {showLabel && <TimeLabel
         x={x}
         y={y}
         cityName={city.name}
@@ -220,7 +255,8 @@ function CityMarker({ city, x, y, localTime, isActive, labelOx, labelOy, labelW,
         offsetX={labelOx}
         offsetY={labelOy}
         rectW={labelW}
-      />
+        isDark={isDark}
+      />}
     </motion.g>
   )
 }
@@ -234,11 +270,23 @@ interface TimeLabelProps {
   offsetX: number
   offsetY: number
   rectW: number
+  isDark: boolean
 }
 
-function TimeLabel({ x, y, cityName, localTime, isActive, offsetX, offsetY, rectW }: TimeLabelProps) {
+function TimeLabel({ x, y, cityName, localTime, isActive, offsetX, offsetY, rectW, isDark }: TimeLabelProps) {
   const labelX = x + offsetX
   const labelY = y + offsetY
+
+  const bgFill       = isDark ? 'rgba(5,8,13,0.90)'   : 'rgba(240,244,248,0.95)'
+  const borderStroke = isActive
+    ? (isDark ? 'rgba(74,222,128,0.42)'  : 'rgba(22,163,74,0.42)')
+    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)')
+  const nameColor    = isActive
+    ? (isDark ? '#4ade80'  : '#16a34a')
+    : (isDark ? '#94a3b8'  : '#475569')
+  const timeColor    = isActive
+    ? (isDark ? '#e2faea'  : '#052e16')
+    : (isDark ? '#f8fafc'  : '#0f172a')
 
   return (
     <g>
@@ -248,14 +296,14 @@ function TimeLabel({ x, y, cityName, localTime, isActive, offsetX, offsetY, rect
         width={rectW}
         height={34}
         rx={5}
-        fill="rgba(5,8,13,0.90)"
-        stroke={isActive ? 'rgba(74,222,128,0.42)' : 'rgba(255,255,255,0.08)'}
+        fill={bgFill}
+        stroke={borderStroke}
         strokeWidth={0.8}
       />
       <text
         x={labelX}
         y={labelY - 2}
-        fill={isActive ? '#4ade80' : '#94a3b8'}
+        fill={nameColor}
         fontSize={11}
         fontFamily="Inter, system-ui"
         fontWeight="400"
@@ -266,7 +314,7 @@ function TimeLabel({ x, y, cityName, localTime, isActive, offsetX, offsetY, rect
       <text
         x={labelX}
         y={labelY + 13}
-        fill={isActive ? '#e2faea' : '#f8fafc'}
+        fill={timeColor}
         fontSize={14}
         fontFamily="Inter, system-ui"
         fontWeight="200"

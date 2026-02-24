@@ -10,8 +10,8 @@ export function createMercatorProjection(width: number, height: number) {
     // Scale so the whole world fits in width
     .scale(width / (2 * Math.PI))
     .translate([width / 2, height / 2])
-    // Center slightly north so Antarctica doesn't dominate
-    .center([0, 15])
+    // Centre slightly north so populated latitudes are more prominent.
+    .center([0, 32])
     // Clip to valid Mercator range
     .clipExtent([[0, 0], [width, height]])
 

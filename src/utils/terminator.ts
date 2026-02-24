@@ -1,7 +1,6 @@
 import { InverseProjectFn, ProjectFn } from '../types'
 
 const DEG = Math.PI / 180
-const RAD = 180 / Math.PI
 
 /**
  * Compute solar declination (radians) for a given UTC date.
@@ -28,27 +27,20 @@ function getSolarDeclination(date: Date): number {
   return Math.asin(Math.sin(epsilon) * Math.sin(lambda))
 }
 
+
 /**
- * For a given longitude (degrees) and UTC date, compute the latitude (degrees)
- * of the solar terminator (day/night boundary).
- *
- * Formula: tan(φ) = -cos(H) / tan(δ)
- *   φ = terminator latitude
- *   H = hour angle at that longitude
- *   δ = solar declination
+ * Returns true if the sun is above the horizon at the given lat/lng,
+ * using the same solar model as drawTerminator for consistency.
  */
-function terminatorLatitude(lng: number, date: Date): number {
+export function isCityDaytime(date: Date, lat: number, lng: number): boolean {
   const decl = getSolarDeclination(date)
-  if (Math.abs(decl) < 1e-10) return 0 // equinox — terminator is at equator
-
   const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600
-  // Hour angle: 0 at noon UTC at lng=0, increases eastward
-  const H = (utcHours / 24) * 360 + lng - 180
-  const H_rad = H * DEG
-
-  const termLat = Math.atan(-Math.cos(H_rad) / Math.tan(decl)) * RAD
-  return termLat
+  const H_rad = (utcHours * 15 + lng - 180) * DEG
+  const latRad = lat * DEG
+  const cosZ = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(H_rad)
+  return cosZ >= 0
 }
+
 
 /**
  * Draw the day/night terminator overlay onto a Canvas element.
@@ -68,7 +60,8 @@ export function drawTerminator(
   canvas: HTMLCanvasElement,
   date: Date,
   _project: ProjectFn,
-  inverseProject: InverseProjectFn
+  inverseProject: InverseProjectFn,
+  isDark = true
 ): void {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
@@ -110,7 +103,12 @@ export function drawTerminator(
   // Twilight range: cosZ = 0 at the terminator, reaches full night at this value
   // (~7° below horizon ≈ civil/nautical twilight boundary)
   const twilightRange = 0.12
-  const invTwilight = 170 / twilightRange
+  // Dark mode: deep near-black navy (multiply blend).
+  // Light mode: neutral cool gray (normal blend) — light, barely-there tint.
+  const [nightR, nightG, nightB, maxAlpha] = isDark
+    ? [5,  8,  25, 170]
+    : [65, 72, 82,  50]
+  const invTwilight = maxAlpha / twilightRange
 
   const imageData = ctx.createImageData(width, height)
   const data = imageData.data
@@ -130,13 +128,13 @@ export function drawTerminator(
       const cosZ = sinLatSinDecl + cosLatCosDecl * cosH
       if (cosZ >= 0) continue // daytime
 
-      const alpha = Math.round(Math.min(170, -cosZ * invTwilight))
+      const alpha = Math.round(Math.min(maxAlpha, -cosZ * invTwilight))
       if (alpha <= 0) continue
 
       const idx = rowBase + px * 4
-      data[idx] = 5
-      data[idx + 1] = 8
-      data[idx + 2] = 25
+      data[idx]     = nightR
+      data[idx + 1] = nightG
+      data[idx + 2] = nightB
       data[idx + 3] = alpha
     }
   }

@@ -4,25 +4,29 @@ export default {
   theme: {
     extend: {
       colors: {
+        // All colors reference CSS custom properties so dark/light themes work
+        // without touching component className strings.
         bg: {
-          primary: '#05080d',       // near-black cold base
-          secondary: '#090c15',     // bottom bar / secondary panel
-          card: '#0d1120',          // card surface
-          'card-active': '#0b1c0c', // green-tinted active card
+          primary: 'rgb(var(--bg-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--bg-secondary) / <alpha-value>)',
+          card: 'rgb(var(--bg-card) / <alpha-value>)',
+          'card-active': 'rgb(var(--bg-card-active) / <alpha-value>)',
+          'card-day':    'rgb(var(--bg-card-day) / <alpha-value>)',
+          'card-night':  'rgb(var(--bg-card-night) / <alpha-value>)',
         },
         accent: {
-          green: '#4ade80',
-          'green-dim': 'rgba(74,222,128,0.10)',
-          'green-border': 'rgba(74,222,128,0.42)',
+          green: 'rgb(var(--accent-green) / <alpha-value>)',
+          'green-dim': 'rgb(var(--accent-green) / 0.10)',
+          'green-border': 'rgb(var(--accent-green) / 0.42)',
         },
         text: {
-          primary: '#e6eeff',       // cool near-white
-          secondary: '#8caabf',     // blue-gray
-          muted: '#5f7d97',         // readable muted (~5:1 contrast)
+          primary: 'rgb(var(--text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--text-muted) / <alpha-value>)',
         },
         border: {
-          DEFAULT: '#182030',       // dark blue-black border
-          active: 'rgba(74,222,128,0.42)',
+          DEFAULT: 'rgb(var(--border-color) / <alpha-value>)',
+          active: 'rgb(var(--accent-green) / 0.42)',
         },
       },
       fontFamily: {
@@ -30,8 +34,8 @@ export default {
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
-        'glow-green': '0 0 20px rgba(74,222,128,0.2), 0 0 60px rgba(74,222,128,0.07)',
-        'glow-green-sm': '0 0 10px rgba(74,222,128,0.15)',
+        'glow-green': '0 0 20px rgb(var(--accent-green) / 0.2), 0 0 60px rgb(var(--accent-green) / 0.07)',
+        'glow-green-sm': '0 0 10px rgb(var(--accent-green) / 0.15)',
       },
       borderRadius: {
         card: '16px',
