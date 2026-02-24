@@ -47,7 +47,12 @@ app.use('/api/*', rateLimit)
 // 4. API routes
 app.route('/api/cities', citiesRouter)
 
-// 5. Serve frontend static files (production build in dist/)
+// 5. Explicit routes for well-known static files — must come before the SPA fallback
+//    so they are never swallowed by the catch-all index.html handler.
+app.get('/sitemap.xml', serveStatic({ path: './dist/sitemap.xml' }))
+app.get('/robots.txt', serveStatic({ path: './dist/robots.txt' }))
+
+// 6. Serve remaining frontend static files (production build in dist/)
 app.use('*', serveStatic({ root: './dist' }))
 
 // 6. SPA fallback — return index.html for all unmatched routes (client-side routing)
