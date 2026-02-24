@@ -6,7 +6,7 @@ interface AddCityButtonProps {
 
 /**
  * Add city button.
- * Mobile:  full-width narrow strip (~1/5 card height).
+ * Mobile:  full-width button with generous padding (visually comparable to a city card).
  * Desktop: full-width taller row button.
  */
 export function AddCityButton({ onClick }: AddCityButtonProps) {
@@ -15,18 +15,18 @@ export function AddCityButton({ onClick }: AddCityButtonProps) {
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
       className="
-        w-full flex items-center justify-center gap-1.5
-        h-11 rounded-lg border border-dashed border-border
+        w-full flex items-center justify-center gap-2
+        py-5 rounded-xl border border-dashed border-border
         text-text-muted hover:text-accent-green hover:border-accent-green/40
-        text-xs font-light tracking-wide
+        text-sm font-light tracking-wide
         transition-colors duration-200 cursor-pointer
-        md:h-12 md:rounded-card md:gap-2 md:text-sm md:border-solid
+        md:py-0 md:h-12 md:rounded-card md:gap-2 md:text-sm md:border-solid
       "
       aria-label="Add city"
     >
       <svg
-        width="13"
-        height="13"
+        width="14"
+        height="14"
         viewBox="0 0 20 20"
         fill="none"
         stroke="currentColor"
