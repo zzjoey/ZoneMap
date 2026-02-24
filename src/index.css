@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    @apply bg-bg-primary text-text-primary font-sans;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Remove number input arrows */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card-glow {
+    box-shadow:
+      0 0 20px rgba(74, 222, 128, 0.2),
+      0 0 60px rgba(74, 222, 128, 0.07);
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom range slider — pill-shaped drag handle with grip lines */
+  input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: ew-resize; /* left-right resize cursor signals draggability */
+    height: 2px;        /* layout height = track height; wrapper div handles vertical centering */
+  }
+
+  input[type='range']::-webkit-slider-track {
+    @apply bg-border rounded-full;
+    height: 2px;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 22px;
+    width: 40px;
+    margin-top: -10px;
+    border-radius: 6px;
+    background-color: #0d1120;
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    box-shadow:
+      0 0 0 1px rgba(74, 222, 128, 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.6);
+    /* Left/right chevron arrows as inline SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(74,222,128,0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(74,222,128,0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40px 22px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  input[type='range']::-webkit-slider-thumb:hover {
+    border-color: rgba(74, 222, 128, 0.7);
+    box-shadow:
+      0 0 0 1px rgba(74, 222, 128, 0.2),
+      0 0 12px rgba(74, 222, 128, 0.25),
+      0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  input[type='range']:active::-webkit-slider-thumb {
+    border-color: rgba(74, 222, 128, 0.9);
+    background-color: #0b1c0c;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='%234ade80' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='%234ade80' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40px 22px;
+    box-shadow:
+      0 0 0 1px rgba(74, 222, 128, 0.3),
+      0 0 16px rgba(74, 222, 128, 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  input[type='range']::-moz-range-track {
+    @apply bg-border rounded-full;
+    height: 2px;
+  }
+
+  input[type='range']::-moz-range-thumb {
+    height: 22px;
+    width: 40px;
+    border-radius: 6px;
+    background-color: #0d1120;
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpolyline points='14,8 9,11 14,14' fill='none' stroke='rgba(74%2C222%2C128%2C0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='26,8 31,11 26,14' fill='none' stroke='rgba(74%2C222%2C128%2C0.65)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40px 22px;
+  }
+}
