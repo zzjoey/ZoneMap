@@ -47,11 +47,12 @@ app.use('/api/*', rateLimit)
 // 4. API routes
 app.route('/api/cities', citiesRouter)
 
-// 5. Explicit routes for well-known static files — must come before the SPA fallback
-//    so they are never swallowed by the catch-all index.html handler.
-app.get('/sitemap.xml', serveStatic({ path: './dist/sitemap.xml' }))
-app.get('/robots.txt', serveStatic({ path: './dist/robots.txt' }))
-app.get('/llms.txt', serveStatic({ path: './dist/llms.txt' }))
+// 5. Explicit routes for well-known static files — served directly from public/
+//    (committed to git, always available regardless of build status).
+//    Must come before the SPA fallback so they are never swallowed by index.html.
+app.get('/sitemap.xml', serveStatic({ root: './public' }))
+app.get('/robots.txt', serveStatic({ root: './public' }))
+app.get('/llms.txt', serveStatic({ root: './public' }))
 
 // 6. Serve remaining frontend static files (production build in dist/)
 app.use('*', serveStatic({ root: './dist' }))
