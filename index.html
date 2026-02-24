@@ -2,9 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="ZoneMap - Beautiful time zone visualization and conversion tool" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#040609" />
+    <meta name="color-scheme" content="dark light" />
+    <!-- Anti-FOUC: restore saved theme before first paint -->
+    <script>
+      (function () {
+        if (localStorage.getItem('theme') === 'light')
+          document.documentElement.dataset.theme = 'light'
+      })()
+    </script>
+
+    <!-- Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/logo.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+
+    <!-- iOS standalone -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ZoneMap" />
+
     <title>ZoneMap</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

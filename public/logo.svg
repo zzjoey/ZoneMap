@@ -1,0 +1,19 @@
+<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="250" cy="250" r="220" fill="#0F172A" />
+
+  <g fill="#4ADE80">
+    <rect x="242" y="50" width="16" height="30" rx="8" /> 
+    <rect x="242" y="420" width="16" height="30" rx="8" /> 
+    <rect x="420" y="242" width="30" height="16" rx="8" /> 
+    <rect x="50" y="242" width="30" height="16" rx="8" />  
+  </g>
+
+  <line x1="250" y1="250" x2="330" y2="340" stroke="#4ADE80" stroke-width="14" stroke-linecap="round" stroke-dasharray="14 14" />
+  
+  <line x1="250" y1="250" x2="150" y2="160" stroke="#ffffff" stroke-width="20" stroke-linecap="round" />
+  
+  <line x1="250" y1="250" x2="360" y2="110" stroke="#FBBF24" stroke-width="14" stroke-linecap="round" />
+
+  <circle cx="250" cy="250" r="20" fill="#0F172A" />
+  <circle cx="250" cy="250" r="8" fill="#4ADE80" />
+</svg>
