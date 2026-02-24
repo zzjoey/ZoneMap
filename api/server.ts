@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
@@ -8,10 +9,10 @@ import { rateLimit } from './middleware/rateLimit.js'
 
 const app = new Hono()
 
-// 1. Security headers
+// 1. Security headers (all routes)
 app.use('*', secureHeaders())
 
-// 2. CORS — restrict to allowed origins in production
+// 2. CORS — only needed for API routes
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '')
   .split(',')
   .map((o) => o.trim())
@@ -24,7 +25,7 @@ if (process.env.API_KEYS && allowedOrigins.length === 0) {
 }
 
 app.use(
-  '*',
+  '/api/*',
   cors({
     origin: (origin) => {
       if (!origin) return null
@@ -39,16 +40,20 @@ app.use(
   })
 )
 
-// 3. API key auth
-app.use('*', apiKeyAuth)
+// 3. API key auth + rate limiting (API routes only)
+app.use('/api/*', apiKeyAuth)
+app.use('/api/*', rateLimit)
 
-// 4. Rate limiting
-app.use('*', rateLimit)
-
-// Routes
+// 4. API routes
 app.route('/api/cities', citiesRouter)
 
-const port = 3001
+// 5. Serve frontend static files (production build in dist/)
+app.use('*', serveStatic({ root: './dist' }))
+
+// 6. SPA fallback — return index.html for all unmatched routes (client-side routing)
+app.use('*', serveStatic({ path: './dist/index.html' }))
+
+const port = parseInt(process.env.PORT ?? '3001', 10)
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`API server running at http://localhost:${info.port}`)
+  console.log(`Server running at http://localhost:${info.port}`)
 })

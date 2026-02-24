@@ -27,3 +27,5 @@ dist-ssr
 .claude/
 .playwright-mcp/
 docs/plans/**
+
+api/.env
