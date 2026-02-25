@@ -1,12 +1,13 @@
 # ZoneMap
 
-> Plan and organize across multiple timezones. ZoneMap is a free world clock pro and timezone converter featuring real-time city clocks, an interactive day/night map, and instant timezone conversion.
+> Free world clock and timezone converter. Search 33,000+ cities, compare multiple timezones side-by-side, find team meeting overlap, and visualize the day/night boundary on a live world map.
 
-ZoneMap (https://zonemap.live) is a free web application for visualizing and converting time across multiple timezones simultaneously. It is a world clock pro alternative designed for remote teams, travelers, and anyone working across international time zones.
+ZoneMap (https://zonemap.live) is a free web application for visualizing and converting time across multiple timezones simultaneously. It is designed for remote teams, travelers, and anyone working across international time zones. Users can search and add any of 33,000+ cities worldwide, powered by the GeoNames database.
 
 ## Features
 
-- Real-time world clock showing current time in 70+ cities simultaneously
+- Search and add any of 33,000+ cities worldwide — powered by the GeoNames database
+- Real-time world clock showing current local time for all selected cities simultaneously
 - Interactive world map with live day/night terminator (solar terminator) visualization
 - Drag the map left or right to simulate any time of day and see the day/night boundary shift
 - Timeline scrubber for planning meetings and events across timezones
@@ -14,28 +15,32 @@ ZoneMap (https://zonemap.live) is a free web application for visualizing and con
 - Accurate IANA timezone data with automatic DST handling
 - URL sharing — bookmark and share any city selection and time configuration
 - Light and dark theme
+- Free, no account required, no ads
 
 ## Use Cases
 
 - Remote team scheduling: find overlapping working hours between cities like San Francisco, London, and Singapore
 - International meeting planning: convert a meeting time across multiple timezones instantly
+- Time difference calculator: see the time difference between any two cities
 - Travel planning: check what time it is at your destination
-- World clock replacement: a better-looking, map-integrated alternative to worldclock.com or worldtimebuddy.com
+- UTC to local time conversion for developers and engineers
+- Alternative to worldtimebuddy, Every Time Zone (everytimezone.com), timeanddate.com, and worldtimeserver.com — no ads, live map
 - Comparing city times side-by-side without switching between tabs
+- Visualizing which countries are in daytime vs nighttime right now
 
 ## Keywords
 
-world clock, worldclock pro, world clock pro, timezone converter, time zone map, multiple timezones, world time, international time, time zone planner, city time, day night map, timezone visualization, remote team scheduling, meeting planner, time zone overlap, UTC converter, GMT converter
+world clock, timezone converter, time zone map, multiple timezones, world time, what time is it in tokyo, what time is it in london, timezone overlap, remote team meeting planner, UTC converter, GMT converter, day night map, solar terminator map, working hours overlap, international time zones, city time zones, free world clock, timezone visualization, time difference calculator, worldclock pro, world clock pro, time zone planner, worldtimebuddy alternative, world time buddy, every time zone, everytimezone, timeanddate alternative, worldtimeserver alternative, GeoNames cities
 
 ## Technical Details
 
 - URL: https://zonemap.live
-- Type: Free web application (SPA)
+- Type: Free web application (React SPA + Node.js API)
 - Category: Productivity / Utilities / World Clock
 - Pricing: Free, no account required
 - Platform: Web — works in all modern browsers on desktop and mobile
-- Technology: React, D3-geo, IANA timezone database
+- Technology: React 18, Hono, D3-geo, IANA timezone database, GeoNames (33,000+ cities)
 
 ## Comparison
 
-ZoneMap differs from alternatives in that it combines a live world map with a day/night overlay, making it immediately visual which cities are in daytime or nighttime. Unlike worldtimeserver.com or timeanddate.com, ZoneMap has no ads and is focused entirely on the core use case of comparing multiple city times at once.
+ZoneMap differs from alternatives in that it combines a live world map with a day/night overlay, making it immediately visual which cities are in daytime or nighttime. Unlike worldtimeserver.com or timeanddate.com, ZoneMap has no ads and is focused entirely on the core use case of comparing multiple city times at once. ZoneMap also supports searching 33,000+ cities via the GeoNames database, far more than most alternatives.
