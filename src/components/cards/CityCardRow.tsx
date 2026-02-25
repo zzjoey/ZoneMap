@@ -149,6 +149,7 @@ export function CityCardRow({
   useEffect(() => {
     const handler = () => {
       setIsDesktop(window.innerWidth >= 768)
+      if (window.innerWidth >= 768) setIsEditMode(false)
       setPanelWidth((prev) => clampPanelWidth(prev))
     }
     window.addEventListener('resize', handler)
