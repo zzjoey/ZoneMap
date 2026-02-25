@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Reorder } from 'framer-motion'
+import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion'
 import { City } from '../../types'
 import { CityCard } from './CityCard'
 import { AddCityButton } from './AddCityButton'
@@ -28,6 +28,95 @@ function clampPanelWidth(w: number): number {
     ? Math.max(MIN_WIDTH, window.innerWidth - MIN_MAP_WIDTH)
     : MAX_WIDTH
   return Math.min(Math.min(MAX_WIDTH, maxAllowed), Math.max(MIN_WIDTH, w))
+}
+
+interface DraggableCardItemProps {
+  city: City
+  baseCity: City
+  baseTime: Date
+  use12h: boolean
+  useAnalog: boolean
+  isDark: boolean
+  isEditMode: boolean
+  isDesktop: boolean
+  onSelectBase: (city: City) => void
+  onRemove: (cityId: string) => void
+}
+
+function DraggableCardItem({
+  city, baseCity, baseTime, use12h, useAnalog, isDark,
+  isEditMode, isDesktop, onSelectBase, onRemove,
+}: DraggableCardItemProps) {
+  const dragControls = useDragControls()
+  const isActive = city.id === baseCity.id
+
+  return (
+    <Reorder.Item
+      key={city.id}
+      value={city}
+      dragListener={isDesktop}
+      dragControls={!isDesktop && isEditMode ? dragControls : undefined}
+      layout="position"
+      className="flex-shrink-0"
+      style={{ cursor: isDesktop ? 'grab' : 'default' }}
+      whileDrag={{ zIndex: 10 }}
+      transition={{ layout: { type: 'spring', stiffness: 300, damping: 30 } }}
+    >
+      <div className="flex items-center gap-0">
+        {/* Drag handle — edit mode only, mobile only */}
+        <AnimatePresence>
+          {isEditMode && !isDesktop && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 32, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="flex-shrink-0 flex items-center justify-center cursor-grab overflow-hidden"
+              style={{ touchAction: 'none' }}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                dragControls.start(e)
+              }}
+            >
+              <span className="text-text-muted text-base select-none">⠿</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Card */}
+        <div className="flex-1 min-w-0">
+          <CityCard
+            city={city}
+            baseCity={baseCity}
+            baseTime={baseTime}
+            use12h={use12h}
+            useAnalog={useAnalog}
+            isDark={isDark}
+            isActive={isActive}
+            onSelect={onSelectBase}
+            onRemove={onRemove}
+          />
+        </div>
+
+        {/* Delete button — edit mode only, mobile only, not for base city */}
+        <AnimatePresence>
+          {isEditMode && !isDesktop && !isActive && (
+            <motion.button
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 32, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              onClick={() => onRemove(city.id)}
+              className="flex-shrink-0 flex items-center justify-center overflow-hidden"
+            >
+              <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs
+                              flex items-center justify-center font-bold">−</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </Reorder.Item>
+  )
 }
 
 /**
@@ -121,28 +210,19 @@ export function CityCardRow({
           style={{ listStyle: 'none', padding: 0, margin: 0 }}
         >
           {cities.map((city) => (
-            <Reorder.Item
+            <DraggableCardItem
               key={city.id}
-              value={city}
-              dragListener={isDesktop}
-              layout="position"
-              className="flex-shrink-0"
-              style={{ cursor: isDesktop ? 'grab' : 'default' }}
-              whileDrag={{ zIndex: 10 }}
-              transition={{ layout: { type: 'spring', stiffness: 300, damping: 30 } }}
-            >
-              <CityCard
-                city={city}
-                baseCity={baseCity}
-                baseTime={baseTime}
-                use12h={use12h}
-                useAnalog={useAnalog}
-                isDark={isDark}
-                isActive={city.id === baseCity.id}
-                onSelect={onSelectBase}
-                onRemove={onRemove}
-              />
-            </Reorder.Item>
+              city={city}
+              baseCity={baseCity}
+              baseTime={baseTime}
+              use12h={use12h}
+              useAnalog={useAnalog}
+              isDark={isDark}
+              isEditMode={isEditMode}
+              isDesktop={isDesktop}
+              onSelectBase={onSelectBase}
+              onRemove={onRemove}
+            />
           ))}
         </Reorder.Group>
 
