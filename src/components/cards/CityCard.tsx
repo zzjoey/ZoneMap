@@ -53,11 +53,8 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
 
   return (
     <motion.div
-      layout
-      layoutId={city.id}
       initial={{ opacity: 0, x: 16, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 16, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       whileHover={{ scale: 1.02 }}
       whileTap={isDragging ? undefined : { scale: 0.98 }}
