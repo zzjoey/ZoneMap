@@ -5,6 +5,7 @@ interface TimeSliderProps {
   baseTime: Date
   baseCity: City
   isLive: boolean
+  isDark: boolean
   /** Called with offset in minutes from now (positive = future, may exceed 24 h). */
   onChange: (offsetMinutes: number) => void
 }
@@ -40,7 +41,7 @@ function formatOffset(minutes: number): string {
  * onChange receives the offset in minutes from the real wall clock,
  * so multi-day values (+25 h, -48 h …) are passed correctly.
  */
-export function TimeSlider({ baseTime, isLive, onChange }: TimeSliderProps) {
+export function TimeSlider({ baseTime, isLive, isDark, onChange }: TimeSliderProps) {
   // Derive offset from actual Date arithmetic — no modulo / day-wrapping issues
   const derivedOffset = Math.round(
     (baseTime.getTime() - Date.now()) / 60_000
@@ -201,11 +202,15 @@ export function TimeSlider({ baseTime, isLive, onChange }: TimeSliderProps) {
           flex items-center px-2 py-px rounded-full
           transition-all duration-150
           ${showLabel
-            ? 'opacity-100 bg-amber-500/12 border border-amber-500/30'
+            ? isDark
+              ? 'opacity-100 bg-amber-500/12 border border-amber-500/30'
+              : 'opacity-100 bg-red-500/10 border border-red-500/30'
             : 'opacity-0'
           }
         `}>
-          <span className="text-[11px] font-semibold tabular-nums whitespace-nowrap text-amber-400 leading-tight">
+          <span className={`text-[11px] font-semibold tabular-nums whitespace-nowrap leading-tight ${
+            isDark ? 'text-amber-400' : 'text-red-600'
+          }`}>
             {showLabel ? formatOffset(roundedOffset) : '\u200b'}
           </span>
         </div>

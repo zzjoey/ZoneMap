@@ -64,6 +64,7 @@ export function TimeControl({
         baseTime={baseTime}
         baseCity={baseCity}
         isLive={isLive}
+        isDark={isDark}
         onChange={handleSliderChange}
       />
 
@@ -79,7 +80,7 @@ export function TimeControl({
             ? 'border-accent-green-border text-accent-green bg-accent-green-dim cursor-default'
             : isDark
             ? 'border-amber-500/60 text-amber-400 bg-amber-500/10 cursor-pointer'
-            : 'border-orange-500/55 text-orange-600 bg-orange-50 cursor-pointer'
+            : 'border-red-500/50 text-red-600 bg-red-500/8 cursor-pointer'
           }
         `}
       >
@@ -88,7 +89,7 @@ export function TimeControl({
             ? 'bg-accent-green animate-pulse-slow'
             : isDark
             ? 'bg-amber-400 animate-pulse'
-            : 'bg-orange-500 animate-pulse'
+            : 'bg-red-500 animate-pulse'
         }`} />
         {isLive ? 'Live' : 'Resume'}
       </motion.button>
