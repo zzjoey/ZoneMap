@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Reorder } from 'framer-motion'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { Reorder, useDragControls } from 'framer-motion'
 import { City } from '../../types'
 import { CityCard } from './CityCard'
 import { AddCityButton } from './AddCityButton'
@@ -28,6 +28,93 @@ function clampPanelWidth(w: number): number {
     ? Math.max(MIN_WIDTH, window.innerWidth - MIN_MAP_WIDTH)
     : MAX_WIDTH
   return Math.min(Math.min(MAX_WIDTH, maxAllowed), Math.max(MIN_WIDTH, w))
+}
+
+interface MobileDraggableItemProps {
+  city: City
+  baseCity: City
+  baseTime: Date
+  use12h: boolean
+  useAnalog: boolean
+  isDark: boolean
+  isDesktop: boolean
+  onSelectBase: (city: City) => void
+  onRemove: (cityId: string) => void
+}
+
+function MobileDraggableItem({
+  city,
+  baseCity,
+  baseTime,
+  use12h,
+  useAnalog,
+  isDark,
+  isDesktop,
+  onSelectBase,
+  onRemove,
+}: MobileDraggableItemProps) {
+  const dragControls = useDragControls()
+  const [isDragReady, setIsDragReady] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startYRef = useRef(0)
+  const savedEventRef = useRef<PointerEvent | null>(null)
+
+  const cancelTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    setIsDragReady(false)
+  }, [])
+
+  function handlePointerDown(e: React.PointerEvent) {
+    if (isDesktop) return
+    startYRef.current = e.clientY
+    savedEventRef.current = e.nativeEvent
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      setIsDragReady(true)
+      navigator.vibrate?.(50)
+      dragControls.start(savedEventRef.current!)
+    }, 400)
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (isDesktop || timerRef.current === null) return
+    if (Math.abs(e.clientY - startYRef.current) > 8) {
+      cancelTimer()
+    }
+  }
+
+  return (
+    <Reorder.Item
+      value={city}
+      dragControls={dragControls}
+      dragListener={isDesktop}
+      className="flex-shrink-0"
+      style={{ cursor: isDesktop ? 'grab' : 'default' }}
+      animate={{ scale: isDragReady ? 1.04 : 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      whileDrag={{ scale: 1.04, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={cancelTimer}
+      onPointerCancel={cancelTimer}
+      onDragEnd={cancelTimer}
+    >
+      <CityCard
+        city={city}
+        baseCity={baseCity}
+        baseTime={baseTime}
+        use12h={use12h}
+        useAnalog={useAnalog}
+        isDark={isDark}
+        isActive={city.id === baseCity.id}
+        onSelect={onSelectBase}
+        onRemove={onRemove}
+      />
+    </Reorder.Item>
+  )
 }
 
 /**
@@ -106,26 +193,18 @@ export function CityCardRow({
           style={{ listStyle: 'none', padding: 0, margin: 0 }}
         >
           {cities.map((city) => (
-            <Reorder.Item
+            <MobileDraggableItem
               key={city.id}
-              value={city}
-              dragListener={isDesktop}
-              className="flex-shrink-0"
-              style={{ cursor: isDesktop ? 'grab' : undefined }}
-              whileDrag={{ scale: 1.02, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
-            >
-              <CityCard
-                city={city}
-                baseCity={baseCity}
-                baseTime={baseTime}
-                use12h={use12h}
-                useAnalog={useAnalog}
-                isDark={isDark}
-                isActive={city.id === baseCity.id}
-                onSelect={onSelectBase}
-                onRemove={onRemove}
-              />
-            </Reorder.Item>
+              city={city}
+              baseCity={baseCity}
+              baseTime={baseTime}
+              use12h={use12h}
+              useAnalog={useAnalog}
+              isDark={isDark}
+              isDesktop={isDesktop}
+              onSelectBase={onSelectBase}
+              onRemove={onRemove}
+            />
           ))}
         </Reorder.Group>
 
