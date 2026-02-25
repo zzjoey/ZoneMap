@@ -4,7 +4,6 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { citiesRouter } from './routes/cities.js'
-import { apiKeyAuth } from './middleware/auth.js'
 import { rateLimit } from './middleware/rateLimit.js'
 
 const app = new Hono()
@@ -40,8 +39,7 @@ app.use(
   })
 )
 
-// 3. API key auth + rate limiting (API routes only)
-app.use('/api/*', apiKeyAuth)
+// 3. Rate limiting (API routes only)
 app.use('/api/*', rateLimit)
 
 // 4. API routes

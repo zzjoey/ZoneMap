@@ -22,6 +22,7 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   // Focus on mount
   useEffect(() => { inputRef.current?.focus() }, [])
@@ -45,25 +46,32 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
     }
 
     setIsLoading(true)
+    setApiResults([])
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     debounceRef.current = setTimeout(async () => {
       try {
-        const apiKey = import.meta.env.VITE_API_KEY as string | undefined
         const res = await fetch(`/api/cities/search?q=${encodeURIComponent(trimmed)}&limit=15`, {
-          headers: apiKey ? { 'X-API-Key': apiKey } : undefined,
+          signal: controller.signal,
         })
         if (res.ok) {
           const data: City[] = await res.json()
           setApiResults(data)
         }
-      } catch {
-        // API unavailable — fall through to local results
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         setApiResults([])
       } finally {
         setIsLoading(false)
       }
     }, 250)
 
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      controller.abort()
+    }
   }, [query])
 
   const results = useMemo(() => {
