@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.29.3",
   "scripts": {
-    "dev": "concurrently \"vite\" \"tsx watch api/server.ts\"",
+    "dev": "concurrently \"vite --host\" \"tsx watch api/server.ts\"",
     "api": "tsx api/server.ts",
     "start": "tsx api/server.ts",
     "build": "tsc -b && vite build",
