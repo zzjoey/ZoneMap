@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Reorder, useDragControls } from 'framer-motion'
+import { Reorder, useDragControls, motion } from 'framer-motion'
 import { City } from '../../types'
 import { CityCard } from './CityCard'
 import { AddCityButton } from './AddCityButton'
@@ -113,26 +113,31 @@ function MobileDraggableItem({
       dragListener={isDesktop}
       className="flex-shrink-0"
       style={{ cursor: isDesktop ? 'grab' : 'default' }}
-      animate={{ scale: isDragReady ? 1.04 : 1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      whileDrag={{ scale: 1.04, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+      whileDrag={{ zIndex: 10 }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={cancelTimer}
       onPointerCancel={cancelTimer}
       onDragEnd={cancelTimer}
     >
-      <CityCard
-        city={city}
-        baseCity={baseCity}
-        baseTime={baseTime}
-        use12h={use12h}
-        useAnalog={useAnalog}
-        isDark={isDark}
-        isActive={city.id === baseCity.id}
-        onSelect={onSelectBase}
-        onRemove={onRemove}
-      />
+      {/* Scale animation on inner wrapper so it doesn't conflict with Reorder.Item's layout animation */}
+      <motion.div
+        animate={{ scale: isDragReady ? 1.04 : 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        whileDrag={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+      >
+        <CityCard
+          city={city}
+          baseCity={baseCity}
+          baseTime={baseTime}
+          use12h={use12h}
+          useAnalog={useAnalog}
+          isDark={isDark}
+          isActive={city.id === baseCity.id}
+          onSelect={onSelectBase}
+          onRemove={onRemove}
+        />
+      </motion.div>
     </Reorder.Item>
   )
 }
