@@ -38,7 +38,7 @@ interface MobileDraggableItemProps {
   useAnalog: boolean
   isDark: boolean
   isDesktop: boolean
-  scrollContainerRef: React.RefObject<HTMLDivElement>
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>
   onSelectBase: (city: City) => void
   onRemove: (cityId: string) => void
 }
@@ -135,6 +135,21 @@ function MobileDraggableItem({
       const loop = () => {
         if (scrollContainerRef.current && scrollSpeedRef.current !== 0) {
           scrollContainerRef.current.scrollTop += scrollSpeedRef.current
+          // Re-sync FM's drag tracking: the container scrolled but the pointer didn't move,
+          // so FM needs a synthetic pointermove to recompute the drag offset.
+          const ev = latestEventRef.current
+          if (ev) {
+            window.dispatchEvent(new PointerEvent('pointermove', {
+              pointerId: ev.pointerId,
+              clientX: ev.clientX,
+              clientY: ev.clientY,
+              screenX: ev.screenX,
+              screenY: ev.screenY,
+              bubbles: true,
+              cancelable: true,
+              isPrimary: ev.isPrimary,
+            }))
+          }
           rafRef.current = requestAnimationFrame(loop)
         } else {
           rafRef.current = null
@@ -163,9 +178,8 @@ function MobileDraggableItem({
     >
       {/* Scale animation on inner wrapper so it doesn't conflict with Reorder.Item's layout animation */}
       <motion.div
-        animate={{ scale: isDragReady ? 1.04 : 1 }}
+        animate={{ scale: isDragReady ? 1.04 : 1, boxShadow: isDragReady ? '0 8px 32px rgba(0,0,0,0.4)' : '0 0 0 rgba(0,0,0,0)' }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        whileDrag={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
       >
         <CityCard
           city={city}
@@ -247,8 +261,9 @@ export function CityCardRow({
       "
       style={isDesktop ? { width: panelWidth } : undefined}
     >
-      {/* Card list */}
-      <div
+      {/* Card list — motion.div with layoutScroll so FM accounts for scroll offset in layout animations */}
+      <motion.div
+        layoutScroll
         ref={scrollContainerRef}
         className="
           flex flex-col gap-2 px-3 pt-2.5 pb-3 h-full overflow-y-auto
@@ -281,7 +296,7 @@ export function CityCardRow({
         </Reorder.Group>
 
         {!atMax && <AddCityButton onClick={onAddCity} />}
-      </div>
+      </motion.div>
 
       {/* Resize handle — desktop only */}
       <div
