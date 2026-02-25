@@ -196,6 +196,7 @@ export default function App() {
           baseTime={baseTime}
           use12h={use12h}
           useAnalog={useAnalog}
+          isDark={isDark}
           onSelectBase={handleSelectBase}
           onRemove={handleRemoveCity}
           onAddCity={() => setSearchOpen(true)}

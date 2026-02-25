@@ -11,6 +11,7 @@ interface CityCardProps {
   baseTime: Date
   use12h: boolean
   useAnalog: boolean
+  isDark: boolean
   isActive: boolean
   onSelect: (city: City) => void
   onRemove: (cityId: string) => void
@@ -22,12 +23,14 @@ interface CityCardProps {
  * Desktop: wide card with full info (name, country, date, large time).
  * Mobile:  compact fixed-width card (name + time, no country/date).
  */
-export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isActive, onSelect, onRemove }: CityCardProps) {
+export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, onSelect, onRemove }: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   const { hours, minutes, period } = formatCityTimeParts(baseTime, city.timezone, use12h)
   const { hours: hours24, minutes: analogMinutes } = formatCityTimeParts(baseTime, city.timezone, false)
   const localDate = formatCityDate(baseTime, city.timezone)
+  const baseDateStr = formatCityDate(baseTime, baseCity.timezone)
+  const isDifferentDay = !isActive && localDate !== baseDateStr
   const offset = getRelativeOffset(city.timezone, baseCity.timezone, baseTime)
   const isDay = isCityDaytime(baseTime, city.lat, city.lng)
 
@@ -117,9 +120,21 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
           <div className="text-[11px] md:text-[13px] text-text-secondary truncate mt-0.5">
             {city.country}
           </div>
-          <div className="hidden md:block text-[13px] text-text-muted truncate mt-0.5">
-            {localDate}
-          </div>
+          {isDifferentDay ? (
+            <div className="mt-1">
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] md:text-[11px] font-semibold tracking-wide border ${
+                isDark
+                  ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                  : 'bg-red-500/12 text-red-600 border-red-500/30'
+              }`}>
+                {localDate}
+              </span>
+            </div>
+          ) : (
+            <div className="hidden md:block text-[13px] text-text-muted truncate mt-0.5">
+              {localDate}
+            </div>
+          )}
         </div>
 
         {/* Time — analog clock or digital digits */}
