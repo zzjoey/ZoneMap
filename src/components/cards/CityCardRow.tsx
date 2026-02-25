@@ -167,9 +167,11 @@ function MobileDraggableItem({
       value={city}
       dragControls={dragControls}
       dragListener={isDesktop}
+      layout="position"
       className="flex-shrink-0"
       style={{ cursor: isDesktop ? 'grab' : 'default' }}
       whileDrag={{ zIndex: 10 }}
+      transition={{ layout: { type: 'spring', stiffness: 300, damping: 30 } }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={cancelTimer}
