@@ -66,6 +66,8 @@
 
   #root {
     height: 100%;
+    min-width: 360px;
+    min-height: 480px;
     display: flex;
     flex-direction: column;
   }
