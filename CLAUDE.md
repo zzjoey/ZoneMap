@@ -24,19 +24,19 @@ ZoneMap 是一个精密的时区可视化 Web 应用，允许用户:
 
 ```bash
 # 首次设置 - 复制世界地图数据到 public 目录
-npm run setup
+pnpm run setup
 
 # 开发服务器
-npm run dev
+pnpm run dev
 
 # 类型检查 + 构建生产版本
-npm run build
+pnpm run build
 
 # 代码检查
-npm run lint
+pnpm run lint
 
 # 预览构建结果
-npm run preview
+pnpm run preview
 ```
 
 ## 架构概览
@@ -112,7 +112,7 @@ src/
 ### 地图定制
 - 地图投影设置在 `src/utils/mapUtils.ts` 的 `createMercatorProjection`
 - 终止线外观在 `src/utils/terminator.ts` 的 `drawTerminator` 中可调整
-- 世界地图数据来自 `public/world-110m.json` (通过 `npm run setup` 设置)
+- 世界地图数据来自 `public/world-110m.json` (通过 `pnpm run setup` 设置)
 
 ### 性能注意事项
 - 终止线计算是 CPU 密集型 - 避免不必要的重绘
@@ -128,7 +128,7 @@ src/
 
 ## 故障排除
 
-**地图不显示**: 确保运行了 `npm run setup` 复制世界地图数据
+**地图不显示**: 确保运行了 `pnpm run setup` 复制世界地图数据
 
 **时间不更新**: 检查 `isLiveMode` 状态和 `useClock` hook 的 `isLive` 参数
 

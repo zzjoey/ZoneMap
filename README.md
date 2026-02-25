@@ -20,22 +20,22 @@ A timezone visualization web app. See the current time across multiple cities on
 ## Getting Started
 
 ```bash
-npm install
-npm run setup   # copies world map data into public/
-npm run dev     # http://localhost:5173
+pnpm install
+pnpm run setup   # copies world map data into public/
+pnpm run dev     # http://localhost:5173
 ```
 
-`npm run setup` copies `node_modules/world-atlas/countries-110m.json` to `public/world-110m.json`. This only needs to be run once.
+`pnpm run setup` copies `node_modules/world-atlas/countries-110m.json` to `public/world-110m.json`. This only needs to be run once.
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start dev server |
-| `npm run build` | Type-check + production build |
-| `npm run preview` | Preview the production build |
-| `npm run lint` | Run ESLint |
-| `npm run setup` | Copy world map TopoJSON to `public/` |
+| `pnpm run dev` | Start dev server |
+| `pnpm run build` | Type-check + production build |
+| `pnpm run preview` | Preview the production build |
+| `pnpm run lint` | Run ESLint |
+| `pnpm run setup` | Copy world map TopoJSON to `public/` |
 
 ## Tech Stack
 
