@@ -134,6 +134,7 @@ function MobileDraggableItem({
           useAnalog={useAnalog}
           isDark={isDark}
           isActive={city.id === baseCity.id}
+          isDragging={isDragReady}
           onSelect={onSelectBase}
           onRemove={onRemove}
         />
