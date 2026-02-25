@@ -9,7 +9,7 @@ import {
 } from './data/cities'
 
 import { useClock } from './hooks/useClock'
-import { readUrlState, useUrlSync } from './hooks/useUrlSync'
+import { readUrlState, readLocalState, useUrlSync } from './hooks/useUrlSync'
 import { parseTimeInTimezone } from './utils/timeUtils'
 
 import { AppShell } from './components/layout/AppShell'
@@ -22,18 +22,35 @@ import { CitySearch } from './components/search/CitySearch'
 // Initialise from URL state on first render
 // ---------------------------------------------------------------------------
 function resolveInitialState() {
-  const { cityIds, baseCityId, manualTime } = readUrlState()
+  const { cityIds: urlCityIds, baseCityId: urlBaseCityId, manualTime } = readUrlState()
+  const { cities: localCities, baseCityId: localBaseCityId } = readLocalState()
 
-  // Resolve cities from URL or fall back to defaults
-  const resolvedIds = cityIds.length > 0 ? cityIds : DEFAULT_CITY_IDS
-  const cities = resolvedIds
-    .map((id) => CITY_BY_ID.get(id))
-    .filter((c): c is City => c !== undefined)
-    .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i) // dedupe
+  // Build a supplemental lookup from localStorage for GeoNames cities
+  // (those with "geo-" IDs that aren't in the hardcoded CITY_BY_ID map)
+  const localById = new Map(localCities.map((c) => [c.id, c]))
+
+  let cities: City[]
+  if (urlCityIds.length > 0) {
+    // URL takes priority — resolve each ID against hardcoded map, then localStorage
+    cities = urlCityIds
+      .map((id) => CITY_BY_ID.get(id) ?? localById.get(id))
+      .filter((c): c is City => c !== undefined)
+      .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i)
+  } else if (localCities.length > 0) {
+    // No URL params — restore from localStorage
+    cities = localCities
+  } else {
+    // First-ever visit — use hardcoded defaults
+    cities = DEFAULT_CITY_IDS
+      .map((id) => CITY_BY_ID.get(id))
+      .filter((c): c is City => c !== undefined)
+  }
+
+  const baseCityId = urlBaseCityId ?? localBaseCityId
 
   // Resolve base city
   const baseCity =
-    (baseCityId ? CITY_BY_ID.get(baseCityId) : undefined) ??
+    (baseCityId ? (CITY_BY_ID.get(baseCityId) ?? localById.get(baseCityId)) : undefined) ??
     cities.find((c) => c.id === DEFAULT_BASE_CITY_ID) ??
     cities[0]
 

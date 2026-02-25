@@ -9,6 +9,8 @@ interface UrlSyncOptions {
   isLiveMode: boolean
 }
 
+const STORAGE_KEY = 'zonemap:state'
+
 /**
  * Parse initial state from the URL query string.
  * Returns raw strings that the caller resolves against city data.
@@ -25,6 +27,23 @@ export function readUrlState(): {
     cityIds,
     baseCityId: params.get('base'),
     manualTime: params.get('t'),
+  }
+}
+
+/**
+ * Read persisted state from localStorage.
+ * Stores full City objects so GeoNames search results survive page reload.
+ */
+export function readLocalState(): { cities: City[]; baseCityId: string | null } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return { cities: [], baseCityId: null }
+    const parsed = JSON.parse(raw)
+    const cities: City[] = Array.isArray(parsed.cities) ? parsed.cities : []
+    const baseCityId = typeof parsed.base === 'string' ? parsed.base : null
+    return { cities, baseCityId }
+  } catch {
+    return { cities: [], baseCityId: null }
   }
 }
 
@@ -59,6 +78,14 @@ export function useUrlSync(options: UrlSyncOptions): void {
       if (window.location.search !== newSearch) {
         window.history.replaceState(null, '', newSearch)
       }
+
+      // Persist full City objects + base ID to localStorage.
+      // Storing objects (not just IDs) ensures GeoNames search results
+      // can be restored without a round-trip to the API on reload.
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cities,
+        base: baseCity.id,
+      }))
     }, 500)
 
     return () => {
