@@ -17,10 +17,18 @@ interface CityCardRowProps {
   onReorder: (cities: City[]) => void
 }
 
-const MIN_WIDTH = 384
+const MIN_WIDTH = 300    // narrowest usable card panel
 const MAX_WIDTH = 560
 const DEFAULT_WIDTH = 384
+const MIN_MAP_WIDTH = 320 // map always gets at least this much space
 const MAX_CITIES = 6
+
+function clampPanelWidth(w: number): number {
+  const maxAllowed = typeof window !== 'undefined'
+    ? Math.max(MIN_WIDTH, window.innerWidth - MIN_MAP_WIDTH)
+    : MAX_WIDTH
+  return Math.min(Math.min(MAX_WIDTH, maxAllowed), Math.max(MIN_WIDTH, w))
+}
 
 /**
  * City card panel.
@@ -39,15 +47,19 @@ export function CityCardRow({
   onAddCity,
   onReorder,
 }: CityCardRowProps) {
-  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH)
+  const [panelWidth, setPanelWidth] = useState(() => clampPanelWidth(DEFAULT_WIDTH))
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== 'undefined' && window.innerWidth >= 768
   )
   const resizeStartX = useRef(0)
   const resizeStartW = useRef(0)
 
+  // Keep panel width in bounds when window is resized
   useEffect(() => {
-    const handler = () => setIsDesktop(window.innerWidth >= 768)
+    const handler = () => {
+      setIsDesktop(window.innerWidth >= 768)
+      setPanelWidth((prev) => clampPanelWidth(prev))
+    }
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
   }, [])
@@ -59,7 +71,7 @@ export function CityCardRow({
 
     const onMove = (ev: MouseEvent) => {
       const delta = ev.clientX - resizeStartX.current
-      setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeStartW.current + delta)))
+      setPanelWidth(clampPanelWidth(resizeStartW.current + delta))
     }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)

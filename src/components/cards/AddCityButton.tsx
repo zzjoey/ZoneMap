@@ -20,7 +20,7 @@ export function AddCityButton({ onClick }: AddCityButtonProps) {
         text-text-muted hover:text-accent-green hover:border-accent-green/40
         text-sm font-light tracking-wide
         transition-colors duration-200 cursor-pointer
-        md:min-h-0 md:py-0 md:h-12 md:rounded-card md:gap-2 md:text-sm md:border-solid
+        md:min-h-[3.5rem] md:py-3 md:rounded-card md:gap-2 md:text-sm md:border-solid
       "
       aria-label="Add city"
     >

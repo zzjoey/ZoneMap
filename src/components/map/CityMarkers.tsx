@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { City, ProjectFn } from '../../types'
 import { formatCityTimeStr } from '../../utils/timeUtils'
@@ -137,22 +138,25 @@ export function CityMarkers({ cities, baseTime, activeCity, project, use12h, map
   // Hide name labels on narrow (mobile) maps
   const showLabels = mapWidth >= 640
 
-  // 12h labels are wider ("2:30 AM" vs "14:30")
-  const labelW = (isActive: boolean) => use12h
-    ? (isActive ? 132 : 122)
-    : (isActive ? 114 : 104)
+  // Project all cities to screen coordinates — only recomputes when cities/projection/active city changes, not on every time tick
+  const positioned = useMemo(() =>
+    cities.flatMap((city) => {
+      const pos = project([city.lng, city.lat])
+      if (!pos) return []
+      const [x, y] = pos
+      const isActive = city.id === activeCity.id
+      const lw = use12h ? (isActive ? 132 : 122) : (isActive ? 114 : 104)
+      return [{ id: city.id, x, y, isActive, labelW: lw, city }]
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cities, project, activeCity.id, use12h]
+  )
 
-  // Project all cities to screen coordinates
-  const positioned = cities.flatMap((city) => {
-    const pos = project([city.lng, city.lat])
-    if (!pos) return []
-    const [x, y] = pos
-    const isActive = city.id === activeCity.id
-    return [{ id: city.id, x, y, isActive, labelW: labelW(isActive), city }]
-  })
-
-  // Compute collision-free label offsets (bounds-aware)
-  const labelOffsets = computeLabelOffsets(positioned, mapWidth, mapHeight)
+  // Compute collision-free label offsets — only recomputes when positions or map size changes
+  const labelOffsets = useMemo(
+    () => computeLabelOffsets(positioned, mapWidth, mapHeight),
+    [positioned, mapWidth, mapHeight]
+  )
 
   return (
     <g>

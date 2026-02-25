@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { City } from '../../types'
 import { formatCityTimeParts, formatCityDate, getRelativeOffset } from '../../utils/timeUtils'
 import { isCityDaytime } from '../../utils/terminator'
-import { useState, memo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { AnalogClock } from './AnalogClock'
 
 interface CityCardProps {
@@ -26,13 +26,24 @@ interface CityCardProps {
 export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, onSelect, onRemove }: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const { hours, minutes, period } = formatCityTimeParts(baseTime, city.timezone, use12h)
-  const { hours: hours24, minutes: analogMinutes } = formatCityTimeParts(baseTime, city.timezone, false)
-  const localDate = formatCityDate(baseTime, city.timezone)
-  const baseDateStr = formatCityDate(baseTime, baseCity.timezone)
-  const isDifferentDay = !isActive && localDate !== baseDateStr
-  const offset = getRelativeOffset(city.timezone, baseCity.timezone, baseTime)
-  const isDay = isCityDaytime(baseTime, city.lat, city.lng)
+  // Memoize all timezone-dependent computations so hover state changes don't trigger recomputation
+  const { hours, minutes, period, hours24, analogMinutes, localDate, isDifferentDay, offset, isDay } = useMemo(() => {
+    const parts = formatCityTimeParts(baseTime, city.timezone, use12h)
+    const parts24 = formatCityTimeParts(baseTime, city.timezone, false)
+    const date = formatCityDate(baseTime, city.timezone)
+    const baseDate = formatCityDate(baseTime, baseCity.timezone)
+    return {
+      hours: parts.hours,
+      minutes: parts.minutes,
+      period: parts.period,
+      hours24: parts24.hours,
+      analogMinutes: parts24.minutes,
+      localDate: date,
+      isDifferentDay: !isActive && date !== baseDate,
+      offset: getRelativeOffset(city.timezone, baseCity.timezone, baseTime),
+      isDay: isCityDaytime(baseTime, city.lat, city.lng),
+    }
+  }, [baseTime, city.timezone, city.lat, city.lng, use12h, baseCity.timezone, isActive])
 
   function handleRemove(e: React.MouseEvent) {
     e.stopPropagation()

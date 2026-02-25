@@ -13,6 +13,17 @@ interface TimeSliderProps {
 const RANGE     = 144 * 60   // ±144 h in minutes (= 8640)
 const PX_PER_HR = 48         // pixels per hour — shows ~±5 h on a 500 px slider
 
+type TickType = 'day' | 'halfday' | 'sixhour' | 'hour'
+
+// Static — built once at module load, never changes
+const TICKS: { min: number; type: TickType }[] = []
+for (let m = -RANGE; m <= RANGE; m += 60) {
+  TICKS.push({
+    min: m,
+    type: m % 1440 === 0 ? 'day' : m % 720 === 0 ? 'halfday' : m % 360 === 0 ? 'sixhour' : 'hour',
+  })
+}
+
 /**
  * Format an offset (minutes) as a human-readable string.
  * Handles days, hours, and minutes automatically.
@@ -85,19 +96,6 @@ export function TimeSlider({ baseTime, isLive, isDark, onChange }: TimeSliderPro
     setDisplayOffset(prev => Math.max(-RANGE, Math.min(RANGE, Math.round(prev))))
   }, [])
 
-  // ── Tick mark definition ────────────────────────────────────────────────
-  // Every 1 h across the full ±144 h range with four visual tiers.
-  type TickType = 'day' | 'halfday' | 'sixhour' | 'hour'
-  const ticks: { min: number; type: TickType }[] = []
-  for (let m = -RANGE; m <= RANGE; m += 60) {
-    const type: TickType =
-      m % 1440 === 0 ? 'day'      :
-      m % 720  === 0 ? 'halfday'  :
-      m % 360  === 0 ? 'sixhour'  :
-                       'hour'
-    ticks.push({ min: m, type })
-  }
-
   const pxPerMin      = PX_PER_HR / 60
   const roundedOffset = Math.round(displayOffset)
   const showLabel     = !isLive && roundedOffset !== 0
@@ -121,7 +119,7 @@ export function TimeSlider({ baseTime, isLive, isDark, onChange }: TimeSliderPro
           willChange: 'transform',
         }}
       >
-        {ticks.map(({ min, type }) => {
+        {TICKS.map(({ min, type }) => {
           const isNow = min === 0
           const days  = Math.abs(min) / 1440
           const label = isNow
