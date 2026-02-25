@@ -38,6 +38,7 @@ interface MobileDraggableItemProps {
   useAnalog: boolean
   isDark: boolean
   isDesktop: boolean
+  scrollContainerRef: React.RefObject<HTMLDivElement>
   onSelectBase: (city: City) => void
   onRemove: (cityId: string) => void
 }
@@ -50,6 +51,7 @@ function MobileDraggableItem({
   useAnalog,
   isDark,
   isDesktop,
+  scrollContainerRef,
   onSelectBase,
   onRemove,
 }: MobileDraggableItemProps) {
@@ -59,21 +61,29 @@ function MobileDraggableItem({
   const startYRef = useRef(0)
   const savedEventRef = useRef<PointerEvent | null>(null)
   const latestEventRef = useRef<PointerEvent | null>(null)
+  const isDragActiveRef = useRef(false)
+  const rafRef = useRef<number | null>(null)
+  const scrollSpeedRef = useRef(0)
 
   const cancelTimer = useCallback(() => {
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    scrollSpeedRef.current = 0
+    isDragActiveRef.current = false
     setIsDragReady(false)
   }, [])
 
-  // Cleanup on unmount: cancel any running timer
+  // Cleanup on unmount: cancel timer and any running animation frame
   useEffect(() => {
     return () => {
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current)
-      }
+      if (timerRef.current !== null) clearTimeout(timerRef.current)
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
   }, [])
 
@@ -90,6 +100,7 @@ function MobileDraggableItem({
     latestEventRef.current = e.nativeEvent
     timerRef.current = setTimeout(() => {
       timerRef.current = null
+      isDragActiveRef.current = true
       setIsDragReady(true)
       navigator.vibrate?.(50)
       const ev = latestEventRef.current ?? savedEventRef.current
@@ -100,11 +111,41 @@ function MobileDraggableItem({
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (isDesktop) return
     latestEventRef.current = e.nativeEvent
-    if (timerRef.current === null) return
-    if (Math.abs(e.clientY - startYRef.current) > 8) {
-      cancelTimer()
+
+    // Cancel long-press timer if finger moved too much (user is scrolling)
+    if (timerRef.current !== null) {
+      if (Math.abs(e.clientY - startYRef.current) > 8) cancelTimer()
+      return
     }
-  }, [isDesktop, cancelTimer])
+
+    // Auto-scroll when dragging near top/bottom edges of the card list
+    if (!isDragActiveRef.current || !scrollContainerRef.current) return
+    const rect = scrollContainerRef.current.getBoundingClientRect()
+    const EDGE = 60
+    const MAX_SPEED = 10
+    let speed = 0
+    if (e.clientY < rect.top + EDGE) {
+      speed = -MAX_SPEED * (1 - Math.max(0, e.clientY - rect.top) / EDGE)
+    } else if (e.clientY > rect.bottom - EDGE) {
+      speed = MAX_SPEED * (1 - Math.max(0, rect.bottom - e.clientY) / EDGE)
+    }
+    scrollSpeedRef.current = speed
+
+    if (speed !== 0 && rafRef.current === null) {
+      const loop = () => {
+        if (scrollContainerRef.current && scrollSpeedRef.current !== 0) {
+          scrollContainerRef.current.scrollTop += scrollSpeedRef.current
+          rafRef.current = requestAnimationFrame(loop)
+        } else {
+          rafRef.current = null
+        }
+      }
+      rafRef.current = requestAnimationFrame(loop)
+    } else if (speed === 0 && rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+  }, [isDesktop, cancelTimer, scrollContainerRef])
 
   return (
     <Reorder.Item
@@ -166,6 +207,7 @@ export function CityCardRow({
   )
   const resizeStartX = useRef(0)
   const resizeStartW = useRef(0)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Keep panel width in bounds when window is resized
   useEffect(() => {
@@ -206,10 +248,13 @@ export function CityCardRow({
       style={isDesktop ? { width: panelWidth } : undefined}
     >
       {/* Card list */}
-      <div className="
-        flex flex-col gap-2 px-3 pt-2.5 pb-3 h-full overflow-y-auto
-        md:gap-3 md:px-3 md:py-3 md:max-h-none md:overflow-x-hidden
-      ">
+      <div
+        ref={scrollContainerRef}
+        className="
+          flex flex-col gap-2 px-3 pt-2.5 pb-3 h-full overflow-y-auto
+          md:gap-3 md:px-3 md:py-3 md:max-h-none md:overflow-x-hidden
+        "
+      >
         <Reorder.Group
           as="div"
           axis="y"
@@ -228,6 +273,7 @@ export function CityCardRow({
               useAnalog={useAnalog}
               isDark={isDark}
               isDesktop={isDesktop}
+              scrollContainerRef={scrollContainerRef}
               onSelectBase={onSelectBase}
               onRemove={onRemove}
             />
