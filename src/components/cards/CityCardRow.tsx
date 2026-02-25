@@ -9,6 +9,7 @@ interface CityCardRowProps {
   baseCity: City
   baseTime: Date
   use12h: boolean
+  useAnalog: boolean
   onSelectBase: (city: City) => void
   onRemove: (cityId: string) => void
   onAddCity: () => void
@@ -30,6 +31,7 @@ export function CityCardRow({
   baseCity,
   baseTime,
   use12h,
+  useAnalog,
   onSelectBase,
   onRemove,
   onAddCity,
@@ -103,6 +105,7 @@ export function CityCardRow({
                 baseCity={baseCity}
                 baseTime={baseTime}
                 use12h={use12h}
+                useAnalog={useAnalog}
                 isActive={city.id === baseCity.id}
                 onSelect={onSelectBase}
                 onRemove={onRemove}

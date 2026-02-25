@@ -15,8 +15,10 @@ interface WorldMapProps {
   baseTime: Date
   use12h: boolean
   isDark: boolean
+  useAnalog: boolean
   onCityClick: (city: City) => void
   onSetFormat: (use12h: boolean) => void
+  onSetAnalog: (v: boolean) => void
   onToggleTheme: () => void
   onTimeChange: (date: Date) => void
 }
@@ -34,7 +36,7 @@ interface WorldMapProps {
  *
  * World atlas TopoJSON is loaded from /world-110m.json (placed in public/).
  */
-export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, onCityClick, onSetFormat, onToggleTheme, onTimeChange }: WorldMapProps) {
+export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog, onCityClick, onSetFormat, onSetAnalog, onToggleTheme, onTimeChange }: WorldMapProps) {
   const { wrapperRef, size, pathGenerator, project, inverseProject } = useMapProjection()
 
   const [topoData, setTopoData] = useState<unknown>(null)
@@ -222,27 +224,48 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, onCityCli
           </span>
         </div>
 
-        {/* 24h / 12h format toggle */}
+        {/* 24h / 12h / analog format toggle — three-way pill */}
         <div className="flex rounded-xl overflow-hidden border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm">
-          {(['24h', '12h'] as const).map((label) => {
-            const active = (label === '12h') === use12h
-            return (
-              <button
-                key={label}
-                onClick={() => onSetFormat(label === '12h')}
-                className={`
-                  px-3.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold tracking-wide
-                  transition-colors duration-150 cursor-pointer
-                  ${active
-                    ? 'bg-accent-green text-bg-primary'
-                    : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'
-                  }
-                `}
-              >
-                {label}
-              </button>
-            )
-          })}
+          <button
+            onClick={() => { onSetAnalog(false); onSetFormat(false) }}
+            className={`
+              px-3.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold tracking-wide
+              transition-colors duration-150 cursor-pointer
+              ${!useAnalog && !use12h ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            24h
+          </button>
+          <button
+            onClick={() => { onSetAnalog(false); onSetFormat(true) }}
+            className={`
+              px-3.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold tracking-wide
+              transition-colors duration-150 cursor-pointer
+              ${!useAnalog && use12h ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            12h
+          </button>
+          <button
+            onClick={() => onSetAnalog(true)}
+            title="Analog clock"
+            className={`
+              px-3 py-1.5 md:px-3.5 md:py-2 flex items-center justify-center
+              transition-colors duration-150 cursor-pointer
+              ${useAnalog ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            <svg width="13" height="13" className="md:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="12" x2="12" y2="7" />
+              <line x1="12" y1="12" x2="16" y2="14" />
+            </svg>
+            <svg width="15" height="15" className="hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="12" x2="12" y2="7" />
+              <line x1="12" y1="12" x2="16" y2="14" />
+            </svg>
+          </button>
         </div>
 
         {/* Light / dark theme toggle */}

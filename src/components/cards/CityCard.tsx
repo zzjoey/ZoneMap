@@ -3,12 +3,14 @@ import { City } from '../../types'
 import { formatCityTimeParts, formatCityDate, getRelativeOffset } from '../../utils/timeUtils'
 import { isCityDaytime } from '../../utils/terminator'
 import { useState, memo } from 'react'
+import { AnalogClock } from './AnalogClock'
 
 interface CityCardProps {
   city: City
   baseCity: City
   baseTime: Date
   use12h: boolean
+  useAnalog: boolean
   isActive: boolean
   onSelect: (city: City) => void
   onRemove: (cityId: string) => void
@@ -20,10 +22,11 @@ interface CityCardProps {
  * Desktop: wide card with full info (name, country, date, large time).
  * Mobile:  compact fixed-width card (name + time, no country/date).
  */
-export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, isActive, onSelect, onRemove }: CityCardProps) {
+export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isActive, onSelect, onRemove }: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   const { hours, minutes, period } = formatCityTimeParts(baseTime, city.timezone, use12h)
+  const { hours: hours24, minutes: analogMinutes } = formatCityTimeParts(baseTime, city.timezone, false)
   const localDate = formatCityDate(baseTime, city.timezone)
   const offset = getRelativeOffset(city.timezone, baseCity.timezone, baseTime)
   const isDay = isCityDaytime(baseTime, city.lat, city.lng)
@@ -119,23 +122,30 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
           </div>
         </div>
 
-        {/* Time — no animation on digits, updates instantly during timeline drag */}
-        <div className="flex-shrink-0 flex items-baseline gap-0.5 md:gap-1">
-          <div className="flex items-baseline">
-            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
-              {hours}
-            </span>
-            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
-            <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
-              {minutes}
-            </span>
+        {/* Time — analog clock or digital digits */}
+        {useAnalog ? (
+          <div className="flex-shrink-0 flex items-center">
+            <AnalogClock hours={parseInt(hours24)} minutes={parseInt(analogMinutes)} size={64} className="md:hidden" />
+            <AnalogClock hours={parseInt(hours24)} minutes={parseInt(analogMinutes)} size={84} className="hidden md:block" />
           </div>
-          {period && (
-            <span className="text-[10px] md:text-sm font-light text-text-muted self-end mb-0.5 md:mb-1.5 tracking-wide">
-              {period}
-            </span>
-          )}
-        </div>
+        ) : (
+          <div className="flex-shrink-0 flex items-baseline gap-0.5 md:gap-1">
+            <div className="flex items-baseline">
+              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+                {hours}
+              </span>
+              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
+              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+                {minutes}
+              </span>
+            </div>
+            {period && (
+              <span className="text-[10px] md:text-sm font-light text-text-muted self-end mb-0.5 md:mb-1.5 tracking-wide">
+                {period}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   )

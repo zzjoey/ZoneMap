@@ -77,6 +77,7 @@ export default function App() {
   const [manualTime, setManualTime] = useState<Date | null>(INITIAL.manualDate)
   const [searchOpen, setSearchOpen] = useState(false)
   const [use12h, setUse12h] = useState(false)
+  const [useAnalog, setUseAnalog] = useState(false)
   const [isDark, setIsDark] = useState(
     () => localStorage.getItem('theme') !== 'light'
   )
@@ -181,6 +182,8 @@ export default function App() {
             isDark={isDark}
             onCityClick={handleSelectBase}
             onSetFormat={(v) => setUse12h(v)}
+            useAnalog={useAnalog}
+            onSetAnalog={(v) => setUseAnalog(v)}
             onToggleTheme={handleToggleTheme}
             onTimeChange={handleTimeChange}
           />
@@ -192,6 +195,7 @@ export default function App() {
           baseCity={baseCity}
           baseTime={baseTime}
           use12h={use12h}
+          useAnalog={useAnalog}
           onSelectBase={handleSelectBase}
           onRemove={handleRemoveCity}
           onAddCity={() => setSearchOpen(true)}
