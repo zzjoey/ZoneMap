@@ -65,7 +65,7 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       onMouseLeave={() => setIsHovered(false)}
       className={`
         relative w-full
-        rounded-card px-3 md:px-5 py-3 md:py-5
+        rounded-card px-3 md:px-4 lg:px-5 py-3 md:py-4 lg:py-5
         cursor-pointer border transition-colors duration-300
         ${isDay ? 'bg-bg-card-day' : 'bg-bg-card-night'}
         ${isActive
@@ -104,9 +104,9 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       )}
 
       {/* Offset badge */}
-      <div className="mb-1.5 md:mb-4">
+      <div className="mb-1.5 md:mb-2.5 lg:mb-4">
         {isActive ? (
-          <span className="text-[10px] md:text-sm font-semibold text-accent-green uppercase tracking-widest flex items-center gap-1">
+          <span className="text-[10px] md:text-xs lg:text-sm font-semibold text-accent-green uppercase tracking-widest flex items-center gap-1">
             <motion.span
               className="w-1.5 h-1.5 rounded-full bg-accent-green inline-block"
               animate={{ opacity: [1, 0.3, 1] }}
@@ -115,7 +115,7 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
             Base
           </span>
         ) : (
-          <span className="text-[10px] md:text-sm font-semibold px-2 py-0.5 rounded-full text-accent-green bg-accent-green-dim border border-accent-green/20">
+          <span className="text-[10px] md:text-xs lg:text-sm font-semibold px-2 py-0.5 rounded-full text-accent-green bg-accent-green-dim border border-accent-green/20">
             {offset}
           </span>
         )}
@@ -125,10 +125,10 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       <div className="flex flex-col md:flex-row md:items-end md:justify-between md:gap-3">
         {/* City name (+ country + date on desktop) */}
         <div className="min-w-0 mb-1 md:mb-0 md:flex-1">
-          <div className="text-[13px] md:text-[15px] font-semibold text-text-primary tracking-wide uppercase truncate">
+          <div className="text-[13px] md:text-[13px] lg:text-[15px] font-semibold text-text-primary tracking-wide uppercase truncate">
             {city.name}
           </div>
-          <div className="text-[11px] md:text-[13px] text-text-secondary truncate mt-0.5">
+          <div className="text-[11px] md:text-[11px] lg:text-[13px] text-text-secondary truncate mt-0.5">
             {city.country}
           </div>
           {isDifferentDay ? (
@@ -142,7 +142,7 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
               </span>
             </div>
           ) : (
-            <div className="hidden md:block text-[13px] text-text-muted truncate mt-0.5">
+            <div className="hidden md:block text-[11px] lg:text-[13px] text-text-muted truncate mt-0.5">
               {localDate}
             </div>
           )}
@@ -157,16 +157,16 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
         ) : (
           <div className="flex-shrink-0 flex items-baseline gap-0.5 md:gap-1">
             <div className="flex items-baseline">
-              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+              <span className="text-[2.4rem] md:text-[2.8rem] lg:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
                 {hours}
               </span>
-              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
-              <span className="text-[2.4rem] md:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
+              <span className="text-[2.4rem] md:text-[2.8rem] lg:text-[3.2rem] font-extralight text-text-muted leading-none tracking-tight mx-0.5">:</span>
+              <span className="text-[2.4rem] md:text-[2.8rem] lg:text-[3.2rem] font-extralight tabular-nums text-text-primary leading-none tracking-tight">
                 {minutes}
               </span>
             </div>
             {period && (
-              <span className="text-[10px] md:text-sm font-light text-text-muted self-end mb-0.5 md:mb-1.5 tracking-wide">
+              <span className="text-[10px] md:text-xs lg:text-sm font-light text-text-muted self-end mb-0.5 md:mb-1 lg:mb-1.5 tracking-wide">
                 {period}
               </span>
             )}
