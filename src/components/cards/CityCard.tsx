@@ -15,6 +15,7 @@ interface CityCardProps {
   isActive: boolean
   onSelect: (city: City) => void
   onRemove: (cityId: string) => void
+  isEditMode?: boolean
 }
 
 /**
@@ -23,7 +24,10 @@ interface CityCardProps {
  * Desktop: wide card with full info (name, country, date, large time).
  * Mobile:  compact fixed-width card (name + time, no country/date).
  */
-export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, onSelect, onRemove }: CityCardProps) {
+export const CityCard = memo(function CityCard({
+  city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, onSelect, onRemove,
+  isEditMode = false,
+}: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   // Memoize all timezone-dependent computations so hover state changes don't trigger recomputation
@@ -56,7 +60,7 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       whileHover={{ scale: 1.02 }}
-      onClick={() => onSelect(city)}
+      onClick={() => !isEditMode && onSelect(city)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
@@ -89,7 +93,7 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       </AnimatePresence>
 
       {/* Mobile: always-visible remove button */}
-      {!isActive && (
+      {!isActive && !isEditMode && (
         <button
           onClick={handleRemove}
           className="md:hidden absolute top-2 right-2 w-5 h-5 flex items-center justify-center

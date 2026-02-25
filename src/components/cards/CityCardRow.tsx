@@ -95,6 +95,7 @@ function DraggableCardItem({
             isActive={isActive}
             onSelect={onSelectBase}
             onRemove={onRemove}
+            isEditMode={isEditMode}
           />
         </div>
 
