@@ -58,6 +58,7 @@ function MobileDraggableItem({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startYRef = useRef(0)
   const savedEventRef = useRef<PointerEvent | null>(null)
+  const latestEventRef = useRef<PointerEvent | null>(null)
 
   const cancelTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -67,24 +68,43 @@ function MobileDraggableItem({
     setIsDragReady(false)
   }, [])
 
-  function handlePointerDown(e: React.PointerEvent) {
+  // Cleanup on unmount: cancel any running timer
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (isDesktop) return
+    // Clear any existing timer before starting a new one (handles 2-finger touch)
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+      setIsDragReady(false)
+    }
     startYRef.current = e.clientY
     savedEventRef.current = e.nativeEvent
+    latestEventRef.current = e.nativeEvent
     timerRef.current = setTimeout(() => {
       timerRef.current = null
       setIsDragReady(true)
       navigator.vibrate?.(50)
-      dragControls.start(savedEventRef.current!)
+      const ev = latestEventRef.current ?? savedEventRef.current
+      if (ev) dragControls.start(ev)
     }, 400)
-  }
+  }, [isDesktop, dragControls, cancelTimer])
 
-  function handlePointerMove(e: React.PointerEvent) {
-    if (isDesktop || timerRef.current === null) return
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (isDesktop) return
+    latestEventRef.current = e.nativeEvent
+    if (timerRef.current === null) return
     if (Math.abs(e.clientY - startYRef.current) > 8) {
       cancelTimer()
     }
-  }
+  }, [isDesktop, cancelTimer])
 
   return (
     <Reorder.Item
