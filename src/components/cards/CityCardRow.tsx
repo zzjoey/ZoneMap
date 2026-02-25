@@ -55,7 +55,7 @@ function DraggableCardItem({
       key={city.id}
       value={city}
       dragListener={isDesktop}
-      dragControls={!isDesktop && isEditMode ? dragControls : undefined}
+      dragControls={!isDesktop ? dragControls : undefined}
       layout="position"
       className="flex-shrink-0"
       style={{ cursor: isDesktop ? 'grab' : 'default' }}
