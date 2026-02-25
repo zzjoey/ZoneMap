@@ -13,7 +13,6 @@ interface CityCardProps {
   useAnalog: boolean
   isDark: boolean
   isActive: boolean
-  isDragging?: boolean
   onSelect: (city: City) => void
   onRemove: (cityId: string) => void
 }
@@ -24,7 +23,7 @@ interface CityCardProps {
  * Desktop: wide card with full info (name, country, date, large time).
  * Mobile:  compact fixed-width card (name + time, no country/date).
  */
-export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, isDragging, onSelect, onRemove }: CityCardProps) {
+export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12h, useAnalog, isDark, isActive, onSelect, onRemove }: CityCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   // Memoize all timezone-dependent computations so hover state changes don't trigger recomputation
@@ -57,7 +56,6 @@ export const CityCard = memo(function CityCard({ city, baseCity, baseTime, use12
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       whileHover={{ scale: 1.02 }}
-      whileTap={isDragging ? undefined : { scale: 0.98 }}
       onClick={() => onSelect(city)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
