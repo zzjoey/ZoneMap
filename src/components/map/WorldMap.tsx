@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { feature } from 'topojson-client'
-import { City } from '../../types'
+import { City, ThemeMode } from '../../types'
 import { useMapProjection } from '../../hooks/useMapProjection'
 import { MapBackground } from './MapBackground'
 import { CityMarkers } from './CityMarkers'
@@ -16,10 +16,11 @@ interface WorldMapProps {
   use12h: boolean
   isDark: boolean
   useAnalog: boolean
+  themeMode: ThemeMode
   onCityClick: (city: City) => void
   onSetFormat: (use12h: boolean) => void
   onSetAnalog: (v: boolean) => void
-  onToggleTheme: () => void
+  onSetTheme: (mode: ThemeMode) => void
   onTimeChange: (date: Date) => void
 }
 
@@ -36,11 +37,38 @@ interface WorldMapProps {
  *
  * World atlas TopoJSON is loaded from /world-110m.json (placed in public/).
  */
-export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog, onCityClick, onSetFormat, onSetAnalog, onToggleTheme, onTimeChange }: WorldMapProps) {
+export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog, themeMode, onCityClick, onSetFormat, onSetAnalog, onSetTheme, onTimeChange }: WorldMapProps) {
   const { wrapperRef, size, pathGenerator, project, inverseProject } = useMapProjection()
 
   const [topoData, setTopoData] = useState<unknown>(null)
   const [showAbout, setShowAbout] = useState(false)
+  const [formatDropdownOpen, setFormatDropdownOpen] = useState(false)
+  const formatDropdownRef = useRef<HTMLDivElement>(null)
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false)
+  const themeDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    if (!formatDropdownOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (formatDropdownRef.current && !formatDropdownRef.current.contains(e.target as Node)) {
+        setFormatDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [formatDropdownOpen])
+
+  useEffect(() => {
+    if (!themeDropdownOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(e.target as Node)) {
+        setThemeDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [themeDropdownOpen])
 
   // ── Drag-to-time refs ───────────────────────────────────────────────────
   const isDragging        = useRef(false)
@@ -224,12 +252,12 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
           </span>
         </div>
 
-        {/* 24h / 12h / analog format toggle — three-way pill */}
-        <div className="flex rounded-xl overflow-hidden border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm">
+        {/* 24h / 12h / analog format toggle — three-way pill on desktop */}
+        <div className="hidden md:flex rounded-xl overflow-hidden border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm">
           <button
             onClick={() => { onSetAnalog(false); onSetFormat(false) }}
             className={`
-              px-3.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold tracking-wide
+              px-4 py-2 text-sm font-semibold tracking-wide
               transition-colors duration-150 cursor-pointer
               ${!useAnalog && !use12h ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
             `}
@@ -239,7 +267,7 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
           <button
             onClick={() => { onSetAnalog(false); onSetFormat(true) }}
             className={`
-              px-3.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold tracking-wide
+              px-4 py-2 text-sm font-semibold tracking-wide
               transition-colors duration-150 cursor-pointer
               ${!useAnalog && use12h ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
             `}
@@ -250,17 +278,12 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
             onClick={() => onSetAnalog(true)}
             title="Analog clock"
             className={`
-              px-3 py-1.5 md:px-3.5 md:py-2 flex items-center justify-center
+              px-3.5 py-2 flex items-center justify-center
               transition-colors duration-150 cursor-pointer
               ${useAnalog ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
             `}
           >
-            <svg width="13" height="13" className="md:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="12" x2="12" y2="7" />
-              <line x1="12" y1="12" x2="16" y2="14" />
-            </svg>
-            <svg width="15" height="15" className="hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="12" x2="12" y2="7" />
               <line x1="12" y1="12" x2="16" y2="14" />
@@ -268,19 +291,82 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
           </button>
         </div>
 
-        {/* Light / dark theme toggle */}
-        <button
-          onClick={onToggleTheme}
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="
-            w-8 h-8 md:w-10 md:h-10 flex items-center justify-center
-            rounded-xl border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm
-            text-text-secondary hover:text-text-primary hover:bg-text-primary/10
-            transition-colors duration-150 cursor-pointer
-          "
-        >
-          {isDark ? (
-            <svg width="15" height="15" className="md:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Format toggle — compact dropdown on mobile */}
+        <div className="md:hidden relative" ref={formatDropdownRef}>
+          <button
+            onClick={() => setFormatDropdownOpen((v) => !v)}
+            title="Time format"
+            className="
+              w-8 h-8 flex items-center justify-center
+              rounded-xl border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm
+              text-text-secondary hover:text-text-primary hover:bg-text-primary/10
+              transition-colors duration-150 cursor-pointer
+            "
+          >
+            {useAnalog ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="12" x2="12" y2="7" />
+                <line x1="12" y1="12" x2="16" y2="14" />
+              </svg>
+            ) : (
+              <span className="text-[11px] font-bold leading-none">{use12h ? '12h' : '24h'}</span>
+            )}
+          </button>
+
+          {formatDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1.5 rounded-xl border border-border bg-bg-primary/95 backdrop-blur-sm shadow-lg overflow-hidden z-30 min-w-[72px]">
+              <button
+                onClick={() => { onSetAnalog(false); onSetFormat(false); setFormatDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left
+                  transition-colors duration-150 cursor-pointer
+                  ${!useAnalog && !use12h ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                24h
+              </button>
+              <button
+                onClick={() => { onSetAnalog(false); onSetFormat(true); setFormatDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left
+                  transition-colors duration-150 cursor-pointer
+                  ${!useAnalog && use12h ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                12h
+              </button>
+              <button
+                onClick={() => { onSetAnalog(true); setFormatDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left flex items-center gap-2
+                  transition-colors duration-150 cursor-pointer
+                  ${useAnalog ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="12" x2="12" y2="7" />
+                  <line x1="12" y1="12" x2="16" y2="14" />
+                </svg>
+                Clock
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Theme toggle — three-way pill on desktop (Light | Dark | System) */}
+        <div className="hidden md:flex rounded-xl overflow-hidden border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm">
+          <button
+            onClick={() => onSetTheme('light')}
+            title="Light mode"
+            className={`
+              px-3.5 py-2 flex items-center justify-center
+              transition-colors duration-150 cursor-pointer
+              ${themeMode === 'light' ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="4" />
               <line x1="12" y1="2" x2="12" y2="5" />
               <line x1="12" y1="19" x2="12" y2="22" />
@@ -291,29 +377,125 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
               <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
               <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
             </svg>
-          ) : (
-            <svg width="14" height="14" className="md:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          </button>
+          <button
+            onClick={() => onSetTheme('dark')}
+            title="Dark mode"
+            className={`
+              px-3.5 py-2 flex items-center justify-center
+              transition-colors duration-150 cursor-pointer
+              ${themeMode === 'dark' ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
-          )}
-          {isDark ? (
-            <svg width="18" height="18" className="hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="4" />
-              <line x1="12" y1="2" x2="12" y2="5" />
-              <line x1="12" y1="19" x2="12" y2="22" />
-              <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
-              <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
-              <line x1="2" y1="12" x2="5" y2="12" />
-              <line x1="19" y1="12" x2="22" y2="12" />
-              <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
-              <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+          </button>
+          <button
+            onClick={() => onSetTheme('system')}
+            title="System preference"
+            className={`
+              px-3.5 py-2 flex items-center justify-center
+              transition-colors duration-150 cursor-pointer
+              ${themeMode === 'system' ? 'bg-accent-green text-bg-primary' : 'text-text-muted hover:text-text-primary hover:bg-text-primary/10'}
+            `}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
             </svg>
-          ) : (
-            <svg width="17" height="17" className="hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
+          </button>
+        </div>
+
+        {/* Theme toggle — compact dropdown on mobile */}
+        <div className="md:hidden relative" ref={themeDropdownRef}>
+          <button
+            onClick={() => setThemeDropdownOpen((v) => !v)}
+            title="Theme"
+            className="
+              w-8 h-8 flex items-center justify-center
+              rounded-xl border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm
+              text-text-secondary hover:text-text-primary hover:bg-text-primary/10
+              transition-colors duration-150 cursor-pointer
+            "
+          >
+            {themeMode === 'dark' ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            ) : themeMode === 'light' ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <line x1="12" y1="2" x2="12" y2="5" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+                <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+                <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+                <line x1="2" y1="12" x2="5" y2="12" />
+                <line x1="19" y1="12" x2="22" y2="12" />
+                <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+                <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <path d="M8 21h8M12 17v4" />
+              </svg>
+            )}
+          </button>
+
+          {themeDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1.5 rounded-xl border border-border bg-bg-primary/95 backdrop-blur-sm shadow-lg overflow-hidden z-30 min-w-[88px]">
+              <button
+                onClick={() => { onSetTheme('light'); setThemeDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left flex items-center gap-2
+                  transition-colors duration-150 cursor-pointer
+                  ${themeMode === 'light' ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <line x1="12" y1="2" x2="12" y2="5" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                  <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+                  <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+                  <line x1="2" y1="12" x2="5" y2="12" />
+                  <line x1="19" y1="12" x2="22" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+                  <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+                </svg>
+                Light
+              </button>
+              <button
+                onClick={() => { onSetTheme('dark'); setThemeDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left flex items-center gap-2
+                  transition-colors duration-150 cursor-pointer
+                  ${themeMode === 'dark' ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                Dark
+              </button>
+              <button
+                onClick={() => { onSetTheme('system'); setThemeDropdownOpen(false) }}
+                className={`
+                  w-full px-4 py-2.5 text-xs font-semibold text-left flex items-center gap-2
+                  transition-colors duration-150 cursor-pointer
+                  ${themeMode === 'system' ? 'bg-accent-green text-bg-primary' : 'text-text-secondary hover:text-text-primary hover:bg-text-primary/10'}
+                `}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+                System
+              </button>
+            </div>
           )}
-        </button>
+        </div>
       </div>
     </div>
   )

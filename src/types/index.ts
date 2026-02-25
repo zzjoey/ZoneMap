@@ -32,6 +32,9 @@ export interface MapSize {
   height: number
 }
 
+// Theme mode — 'system' follows OS preference
+export type ThemeMode = 'dark' | 'light' | 'system'
+
 // URL state for synchronization
 export interface UrlState {
   cityIds: string[]

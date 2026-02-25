@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useDeferredValue } from 'react'
 import { AnimatePresence } from 'framer-motion'
 
-import { City } from './types'
+import { City, ThemeMode } from './types'
 import {
   CITY_BY_ID,
   DEFAULT_CITY_IDS,
@@ -78,9 +78,24 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [use12h, setUse12h] = useState(false)
   const [useAnalog, setUseAnalog] = useState(false)
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem('theme') !== 'light'
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'dark' || stored === 'light' || stored === 'system') return stored
+    return 'system'
+  })
+
+  // Track OS dark preference for 'system' mode
+  const [systemPrefersDark, setSystemPrefersDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches
   )
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  const isDark = themeMode === 'dark' || (themeMode === 'system' && systemPrefersDark)
 
   // Apply theme to <html>, persist to localStorage, and sync Android nav bar color
   useEffect(() => {
@@ -90,13 +105,13 @@ export default function App() {
     } else {
       root.dataset.theme = 'light'
     }
-    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    localStorage.setItem('theme', themeMode)
     // Keep theme-color in sync so Android Chrome nav bar matches the app theme
     const meta = document.getElementById('theme-color-meta')
     if (meta) meta.setAttribute('content', isDark ? '#040609' : '#f9fafc')
-  }, [isDark])
+  }, [isDark, themeMode])
 
-  const handleToggleTheme = useCallback(() => setIsDark((d) => !d), [])
+  const handleSetTheme = useCallback((mode: ThemeMode) => setThemeMode(mode), [])
 
   // Live clock — only ticks when isLiveMode is true
   const liveClock = useClock(isLiveMode)
@@ -184,7 +199,8 @@ export default function App() {
             onSetFormat={(v) => setUse12h(v)}
             useAnalog={useAnalog}
             onSetAnalog={(v) => setUseAnalog(v)}
-            onToggleTheme={handleToggleTheme}
+            themeMode={themeMode}
+            onSetTheme={handleSetTheme}
             onTimeChange={handleTimeChange}
           />
         </div>
