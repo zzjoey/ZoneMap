@@ -187,8 +187,8 @@ export default function App() {
        *   Desktop (≥ md): flex-row — cards left sidebar, map fills remaining space
        */}
       <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
-        {/* World map — fixed 46 vh on mobile (top), fills remaining space on desktop (right) */}
-        <div className="order-first md:order-2 h-[46vh] flex-shrink-0 md:flex-1 md:h-auto flex flex-col min-h-0 min-w-0">
+        {/* World map — fixed 40 vh on mobile (top), fills remaining space on desktop (right) */}
+        <div className="order-first md:order-2 h-[36vh] flex-shrink-0 md:flex-1 md:h-auto flex flex-col min-h-0 min-w-0">
           <WorldMap
             cities={cities}
             baseCity={baseCity}
