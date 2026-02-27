@@ -44,6 +44,7 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
   const [topoData, setTopoData] = useState<unknown>(null)
   const [showAbout, setShowAbout] = useState(false)
   const [showPH, setShowPH] = useState(() => !localStorage.getItem('ph_dismissed'))
+
   const [formatDropdownOpen, setFormatDropdownOpen] = useState(false)
   const formatDropdownRef = useRef<HTMLDivElement>(null)
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false)
@@ -192,14 +193,16 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
       <div className="absolute top-4 right-5 z-20 flex items-center gap-2">
 
         {/* Product Hunt button — icon-only on mobile, full label on desktop */}
-        <button
-          onClick={() => setShowPH(true)}
+        <a
+          href="https://www.producthunt.com/products/zonemap"
+          target="_blank"
+          rel="noopener noreferrer"
           title="Product Hunt"
           className="
             w-8 h-8 md:w-auto md:h-10 md:px-3.5 md:gap-2 flex items-center justify-center
             rounded-xl border border-border bg-bg-primary/85 backdrop-blur-sm shadow-sm
             text-text-secondary hover:text-[#ff6154]
-            transition-colors duration-150 cursor-pointer
+            transition-colors duration-150
           "
         >
           <svg width="15" height="15" className="md:hidden" viewBox="0 0 40 40" fill="currentColor">
@@ -211,7 +214,7 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
             <path d="M20 0C8.953 0 0 8.953 0 20C0 31.047 8.953 40 20 40C31.047 40 40 31.047 40 20C40 8.953 31.047 0 20 0ZM22.667 24H17.333V30H13.333V10H22.667C26.713 10 30 13.287 30 16.667C30 20.047 26.713 23.333 22.667 24Z" />
           </svg>
           <span className="hidden md:inline text-[13px] font-semibold whitespace-nowrap">Product Hunt</span>
-        </button>
+        </a>
 
         {/* GitHub link — icon-only on mobile, full label on desktop */}
         <a
@@ -264,7 +267,7 @@ export function WorldMap({ cities, baseCity, baseTime, use12h, isDark, useAnalog
         {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       </AnimatePresence>
 
-      {/* Product Hunt modal */}
+      {/* Product Hunt modal — first visit only */}
       <AnimatePresence>
         {showPH && (
           <ProductHuntModal
