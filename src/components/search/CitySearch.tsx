@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { City } from '../../types'
 import { ALL_CITIES } from '../../data/cities'
+import { searchCities } from '../../utils/citySearch'
 
 interface CitySearchProps {
   existingCityIds: Set<string>
@@ -22,7 +23,6 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
 
   // Focus on mount
   useEffect(() => { inputRef.current?.focus() }, [])
@@ -34,7 +34,7 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  // Debounced API search
+  // Debounced client-side search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -47,30 +47,22 @@ export function CitySearch({ existingCityIds, onAdd, onClose }: CitySearchProps)
 
     setIsLoading(true)
     setApiResults([])
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
+    let cancelled = false
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/cities/search?q=${encodeURIComponent(trimmed)}&limit=15`, {
-          signal: controller.signal,
-        })
-        if (res.ok) {
-          const data: City[] = await res.json()
-          setApiResults(data)
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return
-        setApiResults([])
+        const data = await searchCities(trimmed, 15)
+        if (!cancelled) setApiResults(data)
+      } catch {
+        if (!cancelled) setApiResults([])
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
-    }, 250)
+    }, 150)
 
     return () => {
+      cancelled = true
       if (debounceRef.current) clearTimeout(debounceRef.current)
-      controller.abort()
     }
   }, [query])
 

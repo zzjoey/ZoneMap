@@ -52,7 +52,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico}', 'world-110m.json'],
         runtimeCaching: [
           {
             // Cache world atlas topojson (large file, rarely changes)
@@ -63,15 +63,19 @@ export default defineConfig({
               expiration: { maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 days
             },
           },
+          {
+            // Cache geonames city search data
+            urlPattern: /\/geonames-cities\.json$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'geonames-cities',
+              expiration: { maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 days
+            },
+          },
         ],
       },
     }),
   ],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:3001',
-    },
-  },
   build: {
     target: 'esnext',
     rollupOptions: {
